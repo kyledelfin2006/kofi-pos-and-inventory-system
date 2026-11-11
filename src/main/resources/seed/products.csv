@@ -1,0 +1,6 @@
+sku,name,category,unit,cost_price,selling_price,reorder_level,qty_on_hand,active
+SKU-1001,Barako Coffee 250g,Coffee & Tea,pack,142.00,189.00,5,18,true
+SKU-1002,Premium Rice,Rice & Grains,kg,48.00,58.00,10,34,true
+SKU-1003,Spring Water 500mL,Beverages,pc,8.00,15.00,12,60,true
+SKU-1004,Chicken Noodles,Instant Meals,pack,11.00,16.00,5,4,true
+SKU-1005,Dishwashing Liquid 250mL,Household,pc,22.00,29.00,6,11,true

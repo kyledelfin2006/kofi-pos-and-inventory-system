@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T19:35:20+08:00",
+  "title": "Design System: Tindahan POS",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Leaf Green",
+        "canonical": "#247351",
+        "tonalRamp": ["#173f2f", "#1d563b", "#247351", "#348b65", "#5ba47e", "#8bbd9f", "#bfdbca", "#edf6f0"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Soft Green Canvas",
+        "canonical": "#f3f5f2",
+        "tonalRamp": ["#424b45", "#5b665f", "#77817a", "#9aa39d", "#bcc4bf", "#d4dad5", "#e5e9e5", "#f3f5f2"]
+      },
+      "sidebar": {
+        "role": "neutral",
+        "displayName": "Deep Store Green",
+        "canonical": "#1d3029",
+        "tonalRamp": ["#0f1814", "#182720", "#1d3029", "#2b4036", "#40564b", "#688071", "#a7c0b1", "#e0e9e3"]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Validation Red",
+        "canonical": "#b33535",
+        "tonalRamp": ["#421616", "#692020", "#8f2a2a", "#b33535", "#cb5555", "#dd8585", "#edb9b9", "#faeeee"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Screen heading", "purpose": "Names the current module clearly." },
+      "body": { "displayName": "Working text", "purpose": "Keeps forms, tables, and navigation familiar." },
+      "label": { "displayName": "Field label", "purpose": "Makes form meaning easy to scan." }
+    },
+    "shadows": [
+      { "name": "login-panel", "value": "0 7px 20px rgba(26, 47, 35, 0.12)", "purpose": "Separates the sign-in panel from the pale background." }
+    ],
+    "motion": [],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Advances checkout or saves a valid form.",
+      "html": "<button class=\"ds-button\">Complete sale</button>",
+      "css": ".ds-button { background: #247351; color: #ffffff; border: 0; border-radius: 6px; padding: 9px 14px; font: 600 13px 'Segoe UI', Arial, sans-serif; } .ds-button:hover { background: #1e6244; } .ds-button:focus-visible { outline: 2px solid #174f38; outline-offset: 2px; } .ds-button:active { background: #174f38; }"
+    },
+    {
+      "name": "Form Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A familiar editable field with visible focus and error states.",
+      "html": "<input class=\"ds-input\" aria-label=\"Search by name or SKU\" placeholder=\"Search by name or SKU\">",
+      "css": ".ds-input { width: 100%; background: #ffffff; color: #23312b; border: 1px solid #cbd6ce; border-radius: 6px; padding: 8px 10px; font: 400 13px 'Segoe UI', Arial, sans-serif; } .ds-input:focus-visible { border-color: #26775c; outline: 2px solid rgba(38, 119, 92, 0.13); } .ds-input[aria-invalid='true'] { border-color: #b33535; }"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Keeps module changes consistent and the active destination visible.",
+      "html": "<a class=\"ds-nav\" href=\"#products\" aria-current=\"page\">Products</a>",
+      "css": ".ds-nav { display: block; background: transparent; color: #dae5dd; border-radius: 6px; padding: 11px 13px; font: 600 13px 'Segoe UI', Arial, sans-serif; text-decoration: none; } .ds-nav:hover { background: #2b4338; color: #ffffff; } .ds-nav[aria-current='page'] { background: #315343; color: #ffffff; } .ds-nav:focus-visible { outline: 2px solid #b4d6c2; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A calm checkout counter",
+    "overview": "The interface keeps sale math and stock status easy to scan during everyday shop work. A leaf-green accent marks actions and active navigation while a bright, quiet work surface keeps tables and form values legible. The same shell and control language carries across checkout, product maintenance, stock movements, receipts, reports, and settings.",
+    "keyCharacteristics": [
+      "Quiet light workspace framed by a deep green navigation rail.",
+      "Money and quantity values use consistent, clearly grouped numerals.",
+      "Errors, warnings, disabled fields, and success messages have distinct states.",
+      "Familiar JavaFX controls support keyboard-first operation."
+    ],
+    "rules": [
+      { "name": "The Counter Rule", "body": "Let checkout totals and available stock carry the strongest emphasis on the POS screen.", "section": "overview" },
+      { "name": "The Signal Rule", "body": "Use accent color to identify an action or a state, never as decoration.", "section": "colors" },
+      { "name": "The Working Scale Rule", "body": "Keep labels and table data compact; reserve the largest type for the current screen heading and key totals.", "section": "typography" },
+      { "name": "The Flow Rule", "body": "Keep the next action beside the data it changes.", "section": "layout" }
+    ],
+    "dos": [
+      "Do keep field errors directly beside the field that needs correction.",
+      "Do use the primary green for the action that advances the current task.",
+      "Do retain a grey treatment for read-only values."
+    ],
+    "donts": [
+      "Don't use accent colors to decorate inactive panels.",
+      "Don't replace standard controls with custom interactions that slow checkout.",
+      "Don't make historical receipt data editable."
+    ]
+  }
+}
