@@ -65,9 +65,10 @@ CSV values will be quoted/escaped correctly, including commas and quotes in name
 ## Current project structure
 
 - Maven project targeting Java 17 with JavaFX Controls 21.0.6; no additional runtime libraries.
-- `src/main/java/com/cc104/pos/PosApp.java` — JavaFX entry point, sign-in, navigation, and module wiring.
-- `src/main/java/com/cc104/pos/ui/*View.java` — one JavaFX view per module; `UiSupport` and `ProductTables` hold shared UI pieces.
-- `src/main/java/com/cc104/pos/service/PosService.java` — in-memory store state, business validation, use cases, and handwritten algorithms.
+- `src/main/java/com/cc104/pos/Launcher.java` — plain entry point; `app/PosApp.java` — JavaFX sign-in, navigation, and module wiring.
+- `src/main/java/com/cc104/pos/ui/view/*View.java` — one JavaFX view per module; `ui/common` (`UiSupport`, `ProductTables`) holds shared UI pieces.
+- `src/main/java/com/cc104/pos/algorithm/` — hand-written sorts, searches, recursion; `security/` and `util/` — password check and money rounding.
+- `src/main/java/com/cc104/pos/service/PosService.java` — in-memory store state, business validation, and use cases (including reset to default data).
 - `src/main/java/com/cc104/pos/model/` — immutable domain records shared by the service, views, and persistence adapter.
 - `src/main/java/com/cc104/pos/data/PosRepository.java` — persistence port; `CsvPosRepository` maps records and `CsvStore` handles CSV files.
 - `src/main/resources/seed/*.csv` — initial products, demo user, and store settings.

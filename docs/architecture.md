@@ -6,9 +6,13 @@ Tindahan POS is a small JavaFX desktop app. Its code is split by responsibility:
 
 ```mermaid
 flowchart TD
-    App[PosApp: application shell] --> Views[Module views]
+    Launcher --> App[PosApp: application shell]
+    App --> Views[ui.view: module views]
+    Views --> Common[ui.common: shared UI helpers]
     Views --> Service[PosService: business rules and runtime state]
     App --> Service
+    Service --> Algo[algorithm: hand-written sorts, searches, recursion]
+    Service --> Sec[security: PasswordHasher]
     Service --> Port[PosRepository: persistence contract]
     CsvRepo[CsvPosRepository: CSV mapping] -. implements .-> Port
     CsvRepo --> Csv[CsvStore: file and CSV mechanics]
@@ -22,18 +26,23 @@ The dependency direction is intentional. `PosService` depends on the small `PosR
 
 | Location | Responsibility |
 |---|---|
-| `src/main/java/com/cc104/pos/PosApp.java` | JavaFX startup, sign-in, navigation, application shell, and screen wiring. |
-| `src/main/java/com/cc104/pos/ui/` | One view per module; shared field and layout helpers; receipt preview. |
-| `src/main/java/com/cc104/pos/service/PosService.java` | In-memory collections, validation, product/sale/stock rules, reports, and assignment algorithms. |
+| `src/main/java/com/cc104/pos/Launcher.java` | Plain entry point (used by `run.cmd`, `javafx:run`, IDEs); starts `PosApp`. |
+| `src/main/java/com/cc104/pos/app/PosApp.java` | JavaFX startup, sign-in, navigation, application shell, and screen wiring. |
+| `src/main/java/com/cc104/pos/ui/view/` | One view per module plus the receipt dialog. |
+| `src/main/java/com/cc104/pos/ui/common/` | Shared field/layout helpers (`UiSupport`) and the product table. |
+| `src/main/java/com/cc104/pos/service/PosService.java` | In-memory collections (ArrayList, LinkedList, Stack, Queue), validation, product/sale/stock rules, reports, reset. |
+| `src/main/java/com/cc104/pos/algorithm/` | Hand-written insertion/selection sort, linear/binary search, recursive sum. |
+| `src/main/java/com/cc104/pos/security/PasswordHasher.java` | PBKDF2 password verification. |
+| `src/main/java/com/cc104/pos/util/Money.java` | Single definition of money rounding. |
 | `src/main/java/com/cc104/pos/model/` | Immutable product, sale, stock, settings, and activity records shared by layers. |
-| `src/main/java/com/cc104/pos/data/PosRepository.java` | Narrow load/save contract consumed by the service. |
+| `src/main/java/com/cc104/pos/data/PosRepository.java` | Narrow load/save/reset contract consumed by the service. |
 | `src/main/java/com/cc104/pos/data/CsvPosRepository.java` | Converts between typed records and the six CSV files. |
-| `src/main/java/com/cc104/pos/data/CsvStore.java` | Seed initialization, CSV quoting/parsing, and safe single-file replacement. |
-| `src/main/resources/seed/` | Demo data copied into the local `data/` folder on first launch. |
+| `src/main/java/com/cc104/pos/data/CsvStore.java` | Seed initialization, restoring defaults, CSV quoting/parsing, and safe single-file replacement. |
+| `src/main/resources/seed/` | The default dataset: copied to `data/` on first launch and restored by Settings > Reset data to default. |
 
 ## SOLID in this project
 
-- **Single responsibility:** `PosApp` coordinates the app; each `*View` builds one module; `PosService` enforces store rules; `CsvPosRepository` maps records; `CsvStore` handles files and CSV syntax.
+- **Single responsibility:** `PosApp` coordinates the app; each `*View` builds one module; `PosService` enforces store rules; `algorithm/` holds only algorithms; `PasswordHasher` only checks passwords; `CsvPosRepository` maps records; `CsvStore` handles files and CSV syntax.
 - **Open/closed:** alternate storage can be added as another `PosRepository`. The service does not need to know whether its snapshot came from CSV or another source.
 - **Liskov substitution:** any `PosRepository` implementation can replace `CsvPosRepository` while honoring the same load/save contract.
 - **Interface segregation:** the repository port exposes only the operations the service needs: load and save a `StoreData` snapshot.
@@ -63,6 +72,10 @@ The views receive the application service and small callbacks for navigation and
 
 Both actions validate at the service boundary, replace affected immutable `Product` records, append audit rows to the movement log, refresh the restock queue, and persist a snapshot. Voiding keeps the original sale and its lines, marks the sale voided, and restores sold units through new stock-in movements.
 
+### Reset to default data
+
+`SettingsView` asks for confirmation, then calls `PosService.resetToDefaults()`. The service asks `PosRepository.resetToDefaults()`, which makes `CsvStore.restoreDefaults()` overwrite every file in `data/` with its packaged copy from `src/main/resources/seed/`, and returns the restored snapshot. The service then replaces all in-memory collections (and empties the cart, activity stack and restock queue) via `applySnapshot`.
+
 ### CSV persistence
 
 `CsvPosRepository` knows the file names, column order, and record conversions. `CsvStore` knows how to quote CSV values and replace one file safely. Keeping those jobs separate means CSV format changes do not spread into the service or screen code.
@@ -70,7 +83,7 @@ Both actions validate at the service boundary, replace affected immutable `Produ
 ## Adding a change
 
 1. Put shared business rules in `PosService`, not in a button handler.
-2. Put new screen controls in the relevant `ui/*View` class.
+2. Put new screen controls in the relevant `ui/view/*View` class (shared helpers go in `ui/common`).
 3. Add or update a model record when the value is part of the store domain.
 4. If persisted fields change, update `CsvPosRepository` and the matching seed header together.
 5. Keep the repository interface narrow. Add a method only when the business service needs a new persistence operation.

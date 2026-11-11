@@ -1,51 +1,52 @@
-package com.cc104.pos.ui;
+package com.cc104.pos.ui.view; // One class per screen.
 
-import com.cc104.pos.model.CartLine;
-import com.cc104.pos.model.Product;
-import com.cc104.pos.model.Sale;
-import com.cc104.pos.service.PosService;
-import javafx.animation.PauseTransition;
-import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.util.Duration;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.function.Consumer;
-import static com.cc104.pos.ui.UiSupport.*;
+import com.cc104.pos.model.CartLine;                  // Cart line model.
+import com.cc104.pos.model.Product;                   // Product model.
+import com.cc104.pos.model.Sale;                      // Completed sale.
+import com.cc104.pos.service.PosService;              // Business operations.
+import com.cc104.pos.ui.common.ProductTables;         // Shared product table.
+import javafx.animation.PauseTransition;              // Timer used to debounce typing.
+import javafx.beans.property.ReadOnlyIntegerWrapper;  // Number cell value.
+import javafx.beans.property.ReadOnlyStringWrapper;   // Text cell value.
+import javafx.collections.FXCollections;              // Observable lists.
+import javafx.geometry.Insets;                        // Padding.
+import javafx.scene.Node;                             // Base visual type.
+import javafx.scene.control.Button;                   // Button.
+import javafx.scene.control.Label;                    // Text.
+import javafx.scene.control.TableCell;                // Custom table cell.
+import javafx.scene.control.TableColumn;              // Column.
+import javafx.scene.control.TableView;                // Table.
+import javafx.scene.control.TextField;                // Input.
+import javafx.scene.layout.ColumnConstraints;         // Grid column sizing.
+import javafx.scene.layout.GridPane;                  // Grid layout.
+import javafx.scene.layout.HBox;                      // Horizontal layout.
+import javafx.scene.layout.Priority;                  // Grow priority.
+import javafx.scene.layout.VBox;                      // Vertical layout.
+import javafx.util.Duration;                          // Time span.
+import java.io.IOException;                           // Storage failure.
+import java.math.BigDecimal;                          // Money.
+import java.util.List;                                // Lists.
+import java.util.function.Consumer;                   // Callback.
+import static com.cc104.pos.ui.common.UiSupport.*;    // Shared helpers.
 
 /** Owns checkout controls and their temporary JavaFX state. */
 public final class PointOfSaleView {
-    private final PosService service;
-    private final String cashier;
-    private final Consumer<String> notice;
-    private final Consumer<Sale> showReceipt;
-    private TableView<CartLine> currentCartTable;
-    private TextField cartSubtotalField;
-    private TextField cartTotalField;
-    private TextField cartChangeField;
-    private TextField cartDiscountField;
-    private TextField cartTenderField;
-    private Label cartDiscountError;
-    private Label cartTenderError;
-    private Label cartLineError;
-    private Button cartCheckoutButton;
-    private String invalidCartSku;
+    private final PosService service;          // Business operations (cart lives inside it).
+    private final String cashier;              // Signed-in user recorded on each sale.
+    private final Consumer<String> notice;     // Top-bar message callback.
+    private final Consumer<Sale> showReceipt;  // Opens the receipt dialog.
+    // Controls that must be updated from several places (kept as fields):
+    private TableView<CartLine> currentCartTable; // The cart table.
+    private TextField cartSubtotalField;          // Read-only subtotal.
+    private TextField cartTotalField;             // Read-only total.
+    private TextField cartChangeField;            // Read-only change.
+    private TextField cartDiscountField;          // Editable discount.
+    private TextField cartTenderField;            // Editable cash tendered.
+    private Label cartDiscountError;              // Discount message.
+    private Label cartTenderError;                // Tender message.
+    private Label cartLineError;                  // Quantity / stock message.
+    private Button cartCheckoutButton;            // "Complete sale".
+    private String invalidCartSku;                // SKU of a cart line that currently has a problem, else null.
 
     public PointOfSaleView(PosService service, String cashier, Consumer<String> notice, Consumer<Sale> showReceipt) {
         this.service = service;
@@ -53,10 +54,14 @@ public final class PointOfSaleView {
         this.notice = notice;
         this.showReceipt = showReceipt;
     }
+
+    /** Creates the screen's visual tree. */
     public Node build() {
         VBox root = page("Point of sale", "Search by product name or SKU, then review the cart before taking payment.");
+
+        // ============ LEFT SIDE: product search + results ============
         TableView<Product> results = ProductTables.create(false);
-        results.setItems(FXCollections.observableArrayList(service.searchProducts("")));
+        results.setItems(FXCollections.observableArrayList(service.searchProducts(""))); // Initially list all active products.
         results.setPrefHeight(505);
         TextField search = new TextField();
         search.setPromptText("Search by name or SKU");
@@ -67,21 +72,21 @@ public final class PointOfSaleView {
         clear.getStyleClass().add("clear-button");
         HBox searchRow = new HBox(8, search, clear);
         HBox.setHgrow(search, Priority.ALWAYS);
-        PauseTransition debounce = new PauseTransition(Duration.millis(250));
+        PauseTransition debounce = new PauseTransition(Duration.millis(250)); // Wait 250ms after the last keystroke.
         search.textProperty().addListener((obs, old, value) -> {
-            debounce.stop();
-            debounce.setOnFinished(event -> results.setItems(FXCollections.observableArrayList(service.searchProducts(value))));
-            debounce.playFromStart();
+            debounce.stop();                                                   // Cancel the previous pending search.
+            debounce.setOnFinished(event -> results.setItems(FXCollections.observableArrayList(service.searchProducts(value)))); // Linear search.
+            debounce.playFromStart();                                          // Restart the countdown.
         });
         clear.setOnAction(event -> { search.clear(); search.requestFocus(); });
         Button add = new Button("Add selected product");
         add.getStyleClass().add("secondary-button");
         Label searchError = new Label();
         searchError.getStyleClass().add("field-error");
-        Runnable addProduct = () -> {
+        Runnable addProduct = () -> { // Adds the selected row (or the first match) to the cart.
             List<Product> matches = service.searchProducts(search.getText());
             Product product = results.getSelectionModel().getSelectedItem();
-            if (product == null && !matches.isEmpty()) product = matches.get(0);
+            if (product == null && !matches.isEmpty()) product = matches.get(0); // Fallback to the first result.
             if (product == null) { searchError.setText("No matching active product."); return; }
             try {
                 service.addToCart(product.sku());
@@ -94,11 +99,12 @@ public final class PointOfSaleView {
             }
         };
         add.setOnAction(event -> addProduct.run());
-        search.setOnAction(event -> { addProduct.run(); event.consume(); });
-        results.setOnMouseClicked(event -> { if (event.getClickCount() == 2) addProduct.run(); });
+        search.setOnAction(event -> { addProduct.run(); event.consume(); }); // Enter in the search box adds too.
+        results.setOnMouseClicked(event -> { if (event.getClickCount() == 2) addProduct.run(); }); // Double-click adds.
         VBox catalog = new VBox(10, searchRow, searchError, results, add);
         VBox.setVgrow(results, Priority.ALWAYS);
 
+        // ============ RIGHT SIDE: the cart (a LinkedList inside PosService) ============
         Label cartTitle = new Label("Current sale");
         cartTitle.getStyleClass().add("section-heading");
         Label lineError = new Label();
@@ -110,14 +116,15 @@ public final class PointOfSaleView {
         item.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().product().name()));
         TableColumn<CartLine, Integer> quantity = new TableColumn<>("Qty");
         quantity.setCellValueFactory(c -> new ReadOnlyIntegerWrapper(c.getValue().quantity()).asObject());
-        quantity.setCellFactory(column -> new TableCell<>() {
+        quantity.setCellFactory(column -> new TableCell<>() { // Each Qty cell is an editable text box.
             private final TextField editor = new TextField();
-            {
+            { // Instance initialiser: configure the editor once per cell.
                 editor.setPrefColumnCount(4);
                 editor.setTextFormatter(integerFormatter());
-                editor.setOnAction(event -> commit());
-                editor.focusedProperty().addListener((obs, was, focused) -> { if (!focused) commit(); });
+                editor.setOnAction(event -> commit());                                   // Enter commits.
+                editor.focusedProperty().addListener((obs, was, focused) -> { if (!focused) commit(); }); // Leaving the box commits.
             }
+            /** Sends the typed quantity to the service and shows any stock error. */
             private void commit() {
                 CartLine line = getTableRow() == null ? null : getTableRow().getItem();
                 if (line == null) return;
@@ -143,7 +150,7 @@ public final class PointOfSaleView {
                 updateCartTable();
                 updateCartTotals();
             }
-            @Override protected void updateItem(Integer value, boolean empty) {
+            @Override protected void updateItem(Integer value, boolean empty) { // Called by JavaFX when the cell is (re)used.
                 super.updateItem(value, empty);
                 if (empty || value == null) setGraphic(null);
                 else {
@@ -155,14 +162,14 @@ public final class PointOfSaleView {
         TableColumn<CartLine, String> lineTotal = new TableColumn<>("Amount");
         lineTotal.setCellValueFactory(c -> new ReadOnlyStringWrapper(peso(c.getValue().product().sellingPrice().multiply(BigDecimal.valueOf(c.getValue().quantity())))));
         TableColumn<CartLine, Void> remove = new TableColumn<>("");
-        remove.setCellFactory(column -> new TableCell<>() {
+        remove.setCellFactory(column -> new TableCell<>() { // Each row gets a Remove button.
             private final Button button = new Button("Remove");
             {
                 button.getStyleClass().add("text-button-danger");
                 button.setOnAction(event -> {
                     CartLine line = getTableRow().getItem();
                     if (line != null) {
-                        service.removeFromCart(line.product().sku());
+                        service.removeFromCart(line.product().sku()); // Unlink the line from the LinkedList.
                         if (line.product().sku().equalsIgnoreCase(invalidCartSku)) invalidCartSku = null;
                     }
                     if (invalidCartSku == null) lineError.setText("");
@@ -182,6 +189,7 @@ public final class PointOfSaleView {
         cartTable.setPrefHeight(320);
         cartTable.setItems(FXCollections.observableArrayList(service.cart()));
 
+        // ---- Totals and payment inputs ----
         TextField subtotal = readOnlyField();
         TextField total = readOnlyField();
         TextField change = readOnlyField();
@@ -235,21 +243,21 @@ public final class PointOfSaleView {
         checkout.setOnAction(event -> {
             try {
                 BigDecimal discountAmount = discount.getText().isBlank() ? BigDecimal.ZERO : parsedMoney(discount.getText());
-                Sale sale = service.checkout(cashier, discountAmount, parsedMoney(tender.getText()));
+                Sale sale = service.checkout(cashier, discountAmount, parsedMoney(tender.getText())); // Validates, saves, returns the receipt.
                 notice.accept("Sale saved · " + sale.receiptNo());
                 invalidCartSku = null;
                 lineError.setText("");
                 resetPaymentFields();
                 updateCartTable();
                 updateCartTotals();
-                showReceipt.accept(sale);
+                showReceipt.accept(sale); // Show the receipt preview.
             } catch (IllegalArgumentException | IOException e) {
                 tenderError.setText(e.getMessage());
             }
         });
         discount.textProperty().addListener((obs, old, value) -> updateCartTotals());
         tender.textProperty().addListener((obs, old, value) -> updateCartTotals());
-        tender.setOnAction(event -> { if (!checkout.isDisabled()) checkout.fire(); event.consume(); });
+        tender.setOnAction(event -> { if (!checkout.isDisabled()) checkout.fire(); event.consume(); }); // Enter in tender completes the sale.
         discountError.setMaxWidth(Double.MAX_VALUE);
         tenderError.setMaxWidth(Double.MAX_VALUE);
         VBox cartPanel = new VBox(12, cartTitle, lineError, cartTable, totals, discountError, tenderError, checkout, cancel);
@@ -260,24 +268,27 @@ public final class PointOfSaleView {
         HBox body = new HBox(20, catalog, cartPanel);
         HBox.setHgrow(catalog, Priority.ALWAYS);
         root.getChildren().add(body);
-        updateCartTotals();
+        updateCartTotals(); // Initial calculation.
         return root;
     }
 
+    /** Re-reads the cart from the service into the table. */
     private void updateCartTable() {
         if (currentCartTable != null) currentCartTable.setItems(FXCollections.observableArrayList(service.cart()));
     }
 
+    /** Puts the discount and tender boxes back to their starting values. */
     private void resetPaymentFields() {
         if (cartDiscountField == null || cartTenderField == null) return;
         cartDiscountField.setText("0.00");
         cartTenderField.clear();
     }
 
+    /** Recomputes subtotal/total/change, shows validation messages, and enables or disables checkout. */
     private void updateCartTotals() {
-        if (cartSubtotalField == null) return;
+        if (cartSubtotalField == null) return; // Screen not built yet.
         if (invalidCartSku != null && cartLineError != null && cartLineError.getText().isBlank()) {
-            for (CartLine line : service.cart()) {
+            for (CartLine line : service.cart()) { // Re-explain why a flagged line is invalid.
                 if (line.product().sku().equalsIgnoreCase(invalidCartSku)) {
                     Product current = service.findProduct(invalidCartSku);
                     if (current == null || !current.active()) cartLineError.setText("Product is no longer active. Remove it from the cart.");
@@ -287,7 +298,7 @@ public final class PointOfSaleView {
                 }
             }
         }
-        if (invalidCartSku == null) {
+        if (invalidCartSku == null) { // Look for any line that became invalid since the last check.
             for (CartLine line : service.cart()) {
                 Product current = service.findProduct(line.product().sku());
                 if (current == null || !current.active()) {
@@ -314,9 +325,10 @@ public final class PointOfSaleView {
         cartChangeField.setText(peso(discountValid && tenderValid ? service.change(discount, tender) : BigDecimal.ZERO));
         showFieldError(cartDiscountField, cartDiscountError, discountValid ? "" : "Discount cannot exceed subtotal.");
         showFieldError(cartTenderField, cartTenderError, tenderValid || !hasCart ? "" : "Cash tendered must be at least the total.");
-        cartCheckoutButton.setDisable(!hasCart || !discountValid || !tenderValid || invalidCartSku != null);
+        cartCheckoutButton.setDisable(!hasCart || !discountValid || !tenderValid || invalidCartSku != null); // All conditions must hold.
     }
 
+    /** Escape key: clears the search box if focused there, otherwise abandons the whole cart. */
     public void handleEscape(Node focus) {
         if (focus instanceof TextField field && field.getPromptText().contains("name or SKU")) field.clear();
         else {

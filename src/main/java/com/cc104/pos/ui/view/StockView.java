@@ -1,38 +1,38 @@
-package com.cc104.pos.ui;
+package com.cc104.pos.ui.view; // One class per screen.
 
-import com.cc104.pos.model.Product;
-import com.cc104.pos.model.StockMovement;
-import com.cc104.pos.service.PosService;
-import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import static com.cc104.pos.ui.UiSupport.*;
+import com.cc104.pos.model.Product;                   // Product model.
+import com.cc104.pos.model.StockMovement;             // Movement model.
+import com.cc104.pos.service.PosService;              // Business operations.
+import javafx.beans.property.ReadOnlyIntegerWrapper;  // Number cell value.
+import javafx.beans.property.ReadOnlyStringWrapper;   // Text cell value.
+import javafx.collections.FXCollections;              // Observable lists.
+import javafx.geometry.Insets;                        // Padding.
+import javafx.scene.Node;                             // Base visual type.
+import javafx.scene.control.Button;                   // Button.
+import javafx.scene.control.ComboBox;                 // Drop-down.
+import javafx.scene.control.Label;                    // Text.
+import javafx.scene.control.TableColumn;              // Column.
+import javafx.scene.control.TableView;                // Table.
+import javafx.scene.control.TextArea;                 // Multi-line input.
+import javafx.scene.control.TextField;                // Input.
+import javafx.scene.input.KeyCode;                    // Keys.
+import javafx.scene.layout.HBox;                      // Horizontal layout.
+import javafx.scene.layout.Priority;                  // Grow priority.
+import javafx.scene.layout.VBox;                      // Vertical layout.
+import javafx.util.StringConverter;                   // Converts Product <-> text in the combo box.
+import java.io.IOException;                           // Storage failure.
+import java.util.ArrayList;                           // Lists.
+import java.util.List;                                // List.of.
+import java.util.function.Consumer;                   // Callback.
+import static com.cc104.pos.ui.common.UiSupport.*;    // Shared helpers.
 
 /** Builds the manual stock movement form and movement history. */
 public final class StockView {
-    private final PosService service;
-    private final String pendingSku;
-    private final Runnable clearPendingStock;
-    private final Consumer<String> notice;
-    private final Consumer<String> navigate;
+    private final PosService service;          // Business operations.
+    private final String pendingSku;           // SKU preselected when arriving from the restock queue (may be null).
+    private final Runnable clearPendingStock;  // Tells the shell the preselection was consumed.
+    private final Consumer<String> notice;     // Top-bar message callback.
+    private final Consumer<String> navigate;   // Opens a module by name.
 
     public StockView(PosService service, String pendingSku, Runnable clearPendingStock,
                      Consumer<String> notice, Consumer<String> navigate) {
@@ -42,10 +42,12 @@ public final class StockView {
         this.notice = notice;
         this.navigate = navigate;
     }
+
+    /** Creates the screen's visual tree. */
     public Node build() {
         VBox root = page("Stock movements", "Record stock in, stock out, and downward adjustments. Every change is saved to the local movement log.");
-        VBox form = stockForm();
-        TableView<StockMovement> history = new TableView<>();
+        VBox form = stockForm(); // Left: the entry form.
+        TableView<StockMovement> history = new TableView<>(); // Right: audit log table.
         TableColumn<StockMovement, String> time = new TableColumn<>("Date & time");
         time.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().occurredAt().format(DATE_TIME)));
         TableColumn<StockMovement, String> product = new TableColumn<>("Product");
@@ -60,7 +62,7 @@ public final class StockView {
         note.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().reason()));
         history.getColumns().addAll(List.of(time, product, type, quantity, reference, note));
         ArrayList<StockMovement> recent = new ArrayList<>(service.movements());
-        for (int i = 0, j = recent.size() - 1; i < j; i++, j--) {
+        for (int i = 0, j = recent.size() - 1; i < j; i++, j--) { // Reverse in place (two-pointer swap) so newest shows first.
             StockMovement temp = recent.get(i); recent.set(i, recent.get(j)); recent.set(j, temp);
         }
         history.setItems(FXCollections.observableArrayList(recent));
@@ -74,16 +76,17 @@ public final class StockView {
         return root;
     }
 
+    /** Builds the "New movement" form with live validation. */
     private VBox stockForm() {
         Label title = new Label("New movement");
         title.getStyleClass().add("section-heading");
-        TextField productSearch = new TextField();
+        TextField productSearch = new TextField(); // Filters the product combo box.
         productSearch.setPromptText("Search active products");
         productSearch.setTextFormatter(limitFormatter(60));
         trimOnBlur(productSearch);
         ComboBox<Product> product = new ComboBox<>(FXCollections.observableArrayList(service.activeProducts()));
         product.setPromptText("Select a product");
-        product.setConverter(new StringConverter<>() {
+        product.setConverter(new StringConverter<>() { // How a Product is shown / parsed in the combo box.
             @Override public String toString(Product value) { return value == null ? "" : value.sku() + " · " + value.name(); }
             @Override public Product fromString(String value) {
                 if (value == null) return null;
@@ -95,7 +98,7 @@ public final class StockView {
         ComboBox<String> type = new ComboBox<>(FXCollections.observableArrayList("Stock In", "Stock Out", "Adjust"));
         type.getSelectionModel().selectFirst();
         TextField quantity = new TextField();
-        quantity.setTextFormatter(integerFormatter());
+        quantity.setTextFormatter(integerFormatter()); // Digits only.
         TextArea reason = new TextArea();
         reason.setWrapText(true);
         reason.setPrefRowCount(4);
@@ -114,24 +117,24 @@ public final class StockView {
                 field("Reference", reference), error, save);
         box.getStyleClass().add("surface-panel");
         box.setPadding(new Insets(18));
-        if (pendingSku != null) {
+        if (pendingSku != null) { // Arrived from "Receive next restock": preselect that product.
             Product next = service.findProduct(pendingSku);
             if (next != null) product.setValue(next);
             clearPendingStock.run();
         }
         productSearch.textProperty().addListener((obs, old, value) -> {
             ArrayList<Product> matches = new ArrayList<>();
-            for (Product candidate : service.searchProducts(value)) matches.add(candidate);
+            for (Product candidate : service.searchProducts(value)) matches.add(candidate); // Linear search.
             product.setItems(FXCollections.observableArrayList(matches));
             product.setValue(null);
-            if (!value.isBlank()) product.show();
+            if (!value.isBlank()) product.show(); // Pop the list open.
         });
-        Runnable validateQuantity = () -> {
+        Runnable validateQuantity = () -> { // Re-validates the whole form after any change.
             Product selected = product.getValue();
             String entered = quantity.getText();
             String message = "";
             boolean quantityInvalid = entered.isBlank();
-            boolean noteRequired = type.getValue() != null && !type.getValue().equals("Stock In");
+            boolean noteRequired = type.getValue() != null && !type.getValue().equals("Stock In"); // Out/Adjust need a note.
             boolean noteInvalid = noteRequired && reason.getText().trim().isEmpty();
             if (selected == null) message = "Select an active product.";
             else if (type.getValue() == null) message = "Choose a movement type.";
@@ -151,11 +154,11 @@ public final class StockView {
             setInvalid(type, type.getValue() == null);
             setInvalid(quantity, quantityInvalid || selected == null);
             setInvalid(reason, noteInvalid);
-            save.setDisable(!error.getText().isEmpty());
+            save.setDisable(!error.getText().isEmpty()); // Save only when no error message remains.
         };
         type.valueProperty().addListener((obs, old, value) -> {
             boolean required = value != null && !value.equals("Stock In");
-            setRequiredLabel(box, "Reason / note", required);
+            setRequiredLabel(box, "Reason / note", required); // Add/remove the * marker.
             validateQuantity.run();
         });
         quantity.textProperty().addListener((obs, old, value) -> validateQuantity.run());
@@ -168,11 +171,11 @@ public final class StockView {
             try {
                 service.moveStock(product.getValue().sku(), type.getValue(), Integer.parseInt(quantity.getText()), reason.getText(), reference.getText());
                 notice.accept("Stock movement saved");
-                navigate.accept("Stock");
+                navigate.accept("Stock"); // Reload the screen with the new row.
             } catch (IllegalArgumentException | IOException e) { error.setText(e.getMessage()); }
         });
         box.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ESCAPE) {
+            if (event.getCode() == KeyCode.ESCAPE) { // Esc clears the whole form.
                 productSearch.clear();
                 product.setValue(null);
                 quantity.clear();

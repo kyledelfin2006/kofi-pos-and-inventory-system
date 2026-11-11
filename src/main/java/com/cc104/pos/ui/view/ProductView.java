@@ -1,43 +1,46 @@
-package com.cc104.pos.ui;
+package com.cc104.pos.ui.view; // One class per screen.
 
-import com.cc104.pos.model.Product;
-import com.cc104.pos.service.PosService;
-import javafx.collections.FXCollections;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.function.Consumer;
-import static com.cc104.pos.ui.UiSupport.*;
+import com.cc104.pos.model.Product;                   // Product model.
+import com.cc104.pos.service.PosService;              // Business operations.
+import com.cc104.pos.ui.common.ProductTables;         // Shared product table.
+import javafx.collections.FXCollections;              // Observable lists.
+import javafx.geometry.Insets;                        // Padding.
+import javafx.geometry.Pos;                           // Alignment.
+import javafx.scene.Node;                             // Base visual type.
+import javafx.scene.control.Alert;                    // Pop-up dialog.
+import javafx.scene.control.Button;                   // Button.
+import javafx.scene.control.ButtonType;               // OK/Cancel.
+import javafx.scene.control.ComboBox;                 // Drop-down.
+import javafx.scene.control.Label;                    // Text.
+import javafx.scene.control.TableView;                // Table.
+import javafx.scene.control.TextField;                // Input.
+import javafx.scene.input.KeyCode;                    // Keys.
+import javafx.scene.layout.HBox;                      // Horizontal layout.
+import javafx.scene.layout.Priority;                  // Grow priority.
+import javafx.scene.layout.VBox;                      // Vertical layout.
+import javafx.stage.Stage;                            // Parent window.
+import java.io.IOException;                           // Storage failure.
+import java.math.BigDecimal;                          // Money.
+import java.util.ArrayList;                           // Lists.
+import java.util.List;                                // List.
+import java.util.Locale;                              // Case-insensitive compare.
+import java.util.function.Consumer;                   // Callback.
+import static com.cc104.pos.ui.common.UiSupport.*;    // Shared helpers.
 
 /** Builds product search, sorting, editing, and safe deletion controls. */
 public final class ProductView {
-    private final PosService service;
-    private final Stage stage;
-    private final Consumer<String> notice;
-    private String productEditSku;
+    private final PosService service;       // Business operations.
+    private final Stage stage;              // Parent window for dialogs.
+    private final Consumer<String> notice;  // Top-bar message callback.
+    private String productEditSku;          // SKU being edited, or null when creating a new product.
 
     public ProductView(PosService service, Stage stage, Consumer<String> notice) {
         this.service = service;
         this.stage = stage;
         this.notice = notice;
     }
+
+    /** Creates the screen's visual tree. */
     public Node build() {
         VBox root = page("Products", "Maintain product details, search records, and choose a hand-written sort.");
         TextField search = new TextField();
@@ -52,9 +55,9 @@ public final class ProductView {
         tools.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(search, Priority.ALWAYS);
 
-        TableView<Product> table = ProductTables.create(true);
+        TableView<Product> table = ProductTables.create(true); // Includes the Status column.
         table.setPrefHeight(640);
-        Runnable filter = () -> {
+        Runnable filter = () -> { // Sort with the chosen hand-written algorithm, then filter by the search text.
             List<Product> sorted = sort.getSelectionModel().getSelectedIndex() == 0 ? service.sortProductsByName() : service.sortProductsByQuantity();
             String needle = search.getText().trim().toLowerCase(Locale.ROOT);
             ArrayList<Product> matches = new ArrayList<>();
@@ -71,13 +74,14 @@ public final class ProductView {
         form.setPrefWidth(360);
         add.setOnAction(event -> { table.getSelectionModel().clearSelection(); clearProductForm(form); productEditSku = null; });
         table.getSelectionModel().selectedItemProperty().addListener((obs, old, product) -> {
-            if (product != null) fillProductForm(form, product);
+            if (product != null) fillProductForm(form, product); // Selecting a row loads it into the form.
         });
         filter.run();
         root.getChildren().add(body);
         return root;
     }
 
+    /** Builds the product details form with live validation. */
     private VBox productForm(TableView<Product> table, Runnable filter) {
         Label title = new Label("Product details");
         title.getStyleClass().add("section-heading");
@@ -86,7 +90,7 @@ public final class ProductView {
         TextField name = new TextField();
         name.setTextFormatter(limitFormatter(100));
         ComboBox<String> category = new ComboBox<>(FXCollections.observableArrayList("Beverages", "Coffee & Tea", "Household", "Instant Meals", "Rice & Grains"));
-        category.setEditable(true);
+        category.setEditable(true); // Users may type a new category.
         category.setPromptText("Optional");
         ComboBox<String> unit = new ComboBox<>(FXCollections.observableArrayList(service.units()));
         unit.getSelectionModel().select("pc");
@@ -101,7 +105,7 @@ public final class ProductView {
         bindPesoBlur(price);
         TextField reorder = new TextField("5");
         reorder.setTextFormatter(integerFormatter());
-        TextField qty = readOnlyField();
+        TextField qty = readOnlyField(); // Stock is changed only on the Stock screen.
         qty.setText("0");
         Label skuError = errorLabel();
         Label nameError = errorLabel();
@@ -129,12 +133,12 @@ public final class ProductView {
         box.setPadding(new Insets(18));
         productEditSku = null;
 
-        Runnable validate = () -> {
+        Runnable validate = () -> { // Re-checks every field and enables/disables Save.
             String cleanSku = sku.getText().trim().toUpperCase(Locale.ROOT);
             String cleanName = name.getText().trim();
             BigDecimal c = parsedMoney(cost.getText());
             BigDecimal p = parsedMoney(price.getText());
-            boolean duplicate = !cleanSku.isEmpty() && service.skuExists(cleanSku, productEditSku);
+            boolean duplicate = !cleanSku.isEmpty() && service.skuExists(cleanSku, productEditSku); // Binary search.
             showFieldError(sku, skuError, duplicate ? "SKU already exists." : cleanSku.isEmpty() ? "SKU is required." : "");
             showFieldError(name, nameError, cleanName.isEmpty() ? "Product name is required." : "");
             showFieldError(cost, costError, c == null ? "Enter a valid price with up to 2 decimals." : "");
@@ -145,7 +149,7 @@ public final class ProductView {
                     || reorder.getText().isBlank() || unit.getValue() == null);
         };
         sku.textProperty().addListener((obs, old, value) -> validate.run());
-        sku.textProperty().addListener((obs, old, value) -> {
+        sku.textProperty().addListener((obs, old, value) -> { // Force SKU to upper case as the user types.
             String uppercase = value.toUpperCase(Locale.ROOT);
             if (!value.equals(uppercase)) {
                 int caret = sku.getCaretPosition();
@@ -173,7 +177,7 @@ public final class ProductView {
                 message.setText("");
                 notice.accept(productEditSku == null ? "Product added" : "Product updated");
                 clearProductForm(box);
-                filter.run();
+                filter.run(); // Refresh the table.
             } catch (IllegalArgumentException | IOException e) {
                 message.setText(e.getMessage());
             }
@@ -200,8 +204,9 @@ public final class ProductView {
         return box;
     }
 
+    /** Copies a product's values into the form controls (edit mode). */
     private void fillProductForm(VBox form, Product product) {
-        productEditSku = product.sku();
+        productEditSku = product.sku(); // Remember which product we are editing.
         TextField sku = fieldControl(form, "SKU *", TextField.class);
         TextField name = fieldControl(form, "Product name *", TextField.class);
         ComboBox<?> category = fieldControl(form, "Category", ComboBox.class);
@@ -224,13 +229,14 @@ public final class ProductView {
         if (reorder != null) reorder.setText(Integer.toString(product.reorderLevel()));
         if (qty != null) qty.setText(Integer.toString(product.qtyOnHand()));
         Button delete = findButton(form, "Delete selected");
-        if (delete != null) delete.setDisable(false);
+        if (delete != null) delete.setDisable(false);        // Deleting needs a selected product.
         Button save = findButton(form, "Save product");
-        if (save != null) save.setText("Update product");
+        if (save != null) save.setText("Update product");    // Button wording reflects edit mode.
     }
 
+    /** Resets the form to the blank "new product" state. */
     private void clearProductForm(VBox form) {
-        productEditSku = null;
+        productEditSku = null; // Back to create mode.
         TextField sku = fieldControl(form, "SKU *", TextField.class);
         TextField name = fieldControl(form, "Product name *", TextField.class);
         ComboBox<?> category = fieldControl(form, "Category", ComboBox.class);
@@ -251,6 +257,6 @@ public final class ProductView {
         if (delete != null) delete.setDisable(true);
         Button save = findButton(form, "Update product");
         if (save != null) save.setText("Save product");
-        for (Node node : form.getChildren()) if (node instanceof Label label && label.getStyleClass().contains("field-error")) label.setText("");
+        for (javafx.scene.Node node : form.getChildren()) if (node instanceof Label label && label.getStyleClass().contains("field-error")) label.setText(""); // Wipe old error messages.
     }
 }
