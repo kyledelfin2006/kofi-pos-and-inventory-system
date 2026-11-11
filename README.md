@@ -1,6 +1,6 @@
-# Tindahan POS
+# Kofi: POS & Inventory Management System
 
-An offline JavaFX point-of-sale and stock-management desktop application for the CC 104 final project. Runtime records are held in Java collections and saved locally as CSV; there is no SQL database or network service.
+An offline JavaFX point-of-sale and inventory-management desktop application for a coffee shop for the CC 104 final project. Runtime records are held in Java collections and saved locally as CSV; there is no SQL database or network service.
 
 ## Run
 
@@ -12,11 +12,11 @@ Install JDK 17 or newer, then run from the project directory:
 
 `run.cmd` calls Maven (`javafx:run`), so Maven recompiles any changed source files on every launch; code edits are picked up automatically. It uses `mvn` from your PATH if present; otherwise it falls back to a Maven copy cached in `%USERPROFILE%\.m2\wrapper`, and sets `JAVA_HOME` from `C:\Program Files\Java\jdk-*` when unset. Extra arguments are passed to Maven, e.g. `.\run.cmd -DskipTests compile`.
 
-**Running from an IDE:** open the project as a Maven project (so the JavaFX dependencies load), then run `com.cc104.pos.Launcher` (also the `run.cmd` / `javafx:run` entry point), not `PosApp`. Running `PosApp` directly fails with "JavaFX runtime components are missing" because it extends `Application`.
+**Running from an IDE:** open the project as a Maven project (so the JavaFX dependencies load), then run `com.kofi.pos.Launcher` (also the `run.cmd` / `javafx:run` entry point), not `PosApp`. Running `PosApp` directly fails with "JavaFX runtime components are missing" because it extends `Application`.
 
 If you see "Maven not found", download Maven from <https://maven.apache.org/download.cgi>, unzip it, and add its `bin` folder to PATH (there is no winget package for it). Then plain `mvn javafx:run` also works.
 
-First launch copies the demo CSV files from `src/main/resources/seed/` to `data/`. Changes are saved in `data/` and survive restarts. Back up that folder to preserve the store's records. To return to the sample data at any time, use Settings > Reset data to default.
+First launch copies the default CSV files from `src/main/resources/seed/` to `data/`. If `data/` holds files from an older layout (different column headers), the app restores the defaults automatically. Changes are saved in `data/` and survive restarts. Back up that folder to preserve the store's records. To return to the sample data at any time, use Settings > Reset data to default.
 
 Demo sign-in: **admin** / **admin123**
 
@@ -34,10 +34,25 @@ The short source map is:
 - `ui/view/*View` builds one screen and forwards user actions to `PosService`; `ui/common` holds shared UI helpers.
 - `algorithm/` holds the hand-written sorts, searches and recursion; `security/` and `util/` hold password checking and money rounding.
 - `PosService` owns in-memory store state and business rules.
-- `PosRepository` defines persistence; `CsvPosRepository` maps records to CSV; `CsvStore` handles file and CSV mechanics.
+- `PosRepository` defines persistence; `CsvPosRepository` coordinates it; `data/csv/` holds one layout class per file (`ProductCsv`, `SaleCsv`, ...), the generic `CsvTable`, and `CsvStore` (file and CSV mechanics).
 - `model` contains immutable domain records.
 
-Compile with `mvn -DskipTests compile`; launch with `mvn javafx:run`.
+Package root is `com.kofi.pos`. Compile with `mvn -DskipTests compile`; launch with `mvn javafx:run`.
+
+## Default menu data
+
+The seed in `src/main/resources/seed/products.csv` has 20 items: four coffees (Spanish Latte, Caramel Latte, Café Latte, Americano) in four sizes each (Hot 8 oz and 12 oz, Iced 16 oz and 22 oz), plus Chicken Fillet with Rice, Carbonara, Chicken Sandwich and French Fries. Each size is its own SKU (e.g. `COF-SPL-I16`). **Prices, costs and the starting stock of 50 per item are placeholders**; edit the seed file (or the Products screen) with the real values.
+
+## Assets
+
+| Folder | Purpose |
+|---|---|
+| `assets/` | Original logo artwork (`Kofi_Logo.png`, `Kofi_Logo_Text.png`). |
+| `src/main/resources/assets/branding/` | Resized logos used by the login screen and sidebar. |
+| `src/main/resources/assets/products/` | `placeholder-coffee.png` and `placeholder-food.png`, shown whenever a product has no picture. |
+| `assets/products/` (optional, next to the app) | Drop real product photos here and put the file name in the product's `image` column. |
+
+`AssetLoader` falls back to the placeholders, so a missing picture never breaks a screen.
 
 ## Modules
 
