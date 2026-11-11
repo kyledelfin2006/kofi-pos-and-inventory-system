@@ -53,24 +53,24 @@ Commit small, human-readable seed files under `src/main/resources/seed/`. On fir
 
 | File | Columns |
 |---|---|
-| `products.csv` | `sku,name,category,unit,cost_price,selling_price,reorder_level,qty_on_hand,active` |
+| `products.csv` | `sku,name,category,variant,size_oz,unit,cost_price,selling_price,reorder_level,qty_on_hand,active,image` |
 | `users.csv` | `username,salt,password_hash` |
 | `sales.csv` | `receipt_no,sold_at,cashier,subtotal,discount,total,cash_tendered,change_amount,status,void_reason` |
 | `sale_lines.csv` | `receipt_no,sku,product_name,unit_price,quantity,line_total` |
 | `stock_movements.csv` | `id,occurred_at,sku,product_name,type,quantity,reason,reference` |
 | `settings.csv` | `store_name,store_address,receipt_footer` |
 
-CSV values will be quoted/escaped correctly, including commas and quotes in names and notes. File writes will use a temporary sibling file followed by replacement so an interrupted save is less likely to leave a truncated data file. Seed products will represent a small sample shop. Seed login will be `admin` / `admin123`; the CSV stores a salted PBKDF2 password hash, not the plaintext password. This is a demo account and can be changed in the local user CSV.
+CSV values will be quoted/escaped correctly, including commas and quotes in names and notes. File writes will use a temporary sibling file followed by replacement so an interrupted save is less likely to leave a truncated data file. Seed products are the Kofi menu: 16 coffee SKUs (4 drinks x Hot 8/12 oz, Iced 16/22 oz) and 4 food items, with placeholder prices and a starting stock of 50 each. Seed login will be `admin` / `admin123`; the CSV stores a salted PBKDF2 password hash, not the plaintext password. This is a demo account and can be changed in the local user CSV.
 
 ## Current project structure
 
 - Maven project targeting Java 17 with JavaFX Controls 21.0.6; no additional runtime libraries.
-- `src/main/java/com/cc104/pos/Launcher.java` — plain entry point; `app/PosApp.java` — JavaFX sign-in, navigation, and module wiring.
-- `src/main/java/com/cc104/pos/ui/view/*View.java` — one JavaFX view per module; `ui/common` (`UiSupport`, `ProductTables`) holds shared UI pieces.
-- `src/main/java/com/cc104/pos/algorithm/` — hand-written sorts, searches, recursion; `security/` and `util/` — password check and money rounding.
-- `src/main/java/com/cc104/pos/service/PosService.java` — in-memory store state, business validation, and use cases (including reset to default data).
-- `src/main/java/com/cc104/pos/model/` — immutable domain records shared by the service, views, and persistence adapter.
-- `src/main/java/com/cc104/pos/data/PosRepository.java` — persistence port; `CsvPosRepository` maps records and `CsvStore` handles CSV files.
+- `src/main/java/com/kofi/pos/Launcher.java` — plain entry point; `app/PosApp.java` — JavaFX sign-in, navigation, and module wiring.
+- `src/main/java/com/kofi/pos/ui/view/*View.java` — one JavaFX view per module; `ui/common` (`UiSupport`, `ProductTables`) holds shared UI pieces.
+- `src/main/java/com/kofi/pos/algorithm/` — hand-written sorts, searches, recursion; `security/` and `util/` — password check and money rounding.
+- `src/main/java/com/kofi/pos/service/PosService.java` — in-memory store state, business validation, and use cases (including reset to default data).
+- `src/main/java/com/kofi/pos/model/` — immutable domain records shared by the service, views, and persistence adapter.
+- `src/main/java/com/kofi/pos/data/PosRepository.java` — persistence port; `CsvPosRepository` coordinates loading/saving, `data/csv/*Csv` classes describe each file's columns and row mapping, and `CsvStore` handles CSV files.
 - `src/main/resources/seed/*.csv` — initial products, demo user, and store settings.
 - `src/main/resources/style.css` — shared JavaFX look and control states.
 - `docs/architecture.md` and `docs/code-walkthrough.md` — dependency map, SOLID choices, and the main code paths explained in order.

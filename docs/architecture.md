@@ -1,6 +1,6 @@
 # Developer Architecture
 
-Tindahan POS is a small JavaFX desktop app. Its code is split by responsibility: the application shell wires screens together, each screen owns its own controls, the service owns business rules and in-memory state, and the repository owns CSV conversion and persistence.
+Kofi is a small JavaFX desktop app. Its code is split by responsibility: the application shell wires screens together, each screen owns its own controls, the service owns business rules and in-memory state, and the repository owns CSV conversion and persistence.
 
 ## Dependency map
 
@@ -26,18 +26,19 @@ The dependency direction is intentional. `PosService` depends on the small `PosR
 
 | Location | Responsibility |
 |---|---|
-| `src/main/java/com/cc104/pos/Launcher.java` | Plain entry point (used by `run.cmd`, `javafx:run`, IDEs); starts `PosApp`. |
-| `src/main/java/com/cc104/pos/app/PosApp.java` | JavaFX startup, sign-in, navigation, application shell, and screen wiring. |
-| `src/main/java/com/cc104/pos/ui/view/` | One view per module plus the receipt dialog. |
-| `src/main/java/com/cc104/pos/ui/common/` | Shared field/layout helpers (`UiSupport`) and the product table. |
-| `src/main/java/com/cc104/pos/service/PosService.java` | In-memory collections (ArrayList, LinkedList, Stack, Queue), validation, product/sale/stock rules, reports, reset. |
-| `src/main/java/com/cc104/pos/algorithm/` | Hand-written insertion/selection sort, linear/binary search, recursive sum. |
-| `src/main/java/com/cc104/pos/security/PasswordHasher.java` | PBKDF2 password verification. |
-| `src/main/java/com/cc104/pos/util/Money.java` | Single definition of money rounding. |
-| `src/main/java/com/cc104/pos/model/` | Immutable product, sale, stock, settings, and activity records shared by layers. |
-| `src/main/java/com/cc104/pos/data/PosRepository.java` | Narrow load/save/reset contract consumed by the service. |
-| `src/main/java/com/cc104/pos/data/CsvPosRepository.java` | Converts between typed records and the six CSV files. |
-| `src/main/java/com/cc104/pos/data/CsvStore.java` | Seed initialization, restoring defaults, CSV quoting/parsing, and safe single-file replacement. |
+| `src/main/java/com/kofi/pos/Launcher.java` | Plain entry point (used by `run.cmd`, `javafx:run`, IDEs); starts `PosApp`. |
+| `src/main/java/com/kofi/pos/app/PosApp.java` | JavaFX startup, sign-in, navigation, application shell, and screen wiring. |
+| `src/main/java/com/kofi/pos/ui/view/` | One view per module plus the receipt dialog. |
+| `src/main/java/com/kofi/pos/ui/common/` | Shared field/layout helpers (`UiSupport`) and the product table. |
+| `src/main/java/com/kofi/pos/service/PosService.java` | In-memory collections (ArrayList, LinkedList, Stack, Queue), validation, product/sale/stock rules, reports, reset. |
+| `src/main/java/com/kofi/pos/algorithm/` | Hand-written insertion/selection sort, linear/binary search, recursive sum. |
+| `src/main/java/com/kofi/pos/security/PasswordHasher.java` | PBKDF2 password verification. |
+| `src/main/java/com/kofi/pos/util/Money.java` | Single definition of money rounding. |
+| `src/main/java/com/kofi/pos/model/` | Immutable product, sale, stock, settings, and activity records shared by layers. |
+| `src/main/java/com/kofi/pos/data/PosRepository.java` | Narrow load/save/reset contract consumed by the service. |
+| `src/main/java/com/kofi/pos/data/CsvPosRepository.java` | Coordinates loading/saving the six CSV files and the header (schema) check that auto-resets old-layout data. |
+| `src/main/java/com/kofi/pos/data/csv/*Csv.java`, `CsvTable.java` | One class per file describing its columns and how a row maps to a record and back. |
+| `src/main/java/com/kofi/pos/data/csv/CsvStore.java` | Seed initialization, restoring defaults, CSV quoting/parsing, and safe single-file replacement. |
 | `src/main/resources/seed/` | The default dataset: copied to `data/` on first launch and restored by Settings > Reset data to default. |
 
 ## SOLID in this project
@@ -78,14 +79,14 @@ Both actions validate at the service boundary, replace affected immutable `Produ
 
 ### CSV persistence
 
-`CsvPosRepository` knows the file names, column order, and record conversions. `CsvStore` knows how to quote CSV values and replace one file safely. Keeping those jobs separate means CSV format changes do not spread into the service or screen code.
+`CsvPosRepository` coordinates the files; each `*Csv` class knows its file name, column order, and record conversions. `CsvStore` knows how to quote CSV values and replace one file safely. Keeping those jobs separate means CSV format changes do not spread into the service or screen code.
 
 ## Adding a change
 
 1. Put shared business rules in `PosService`, not in a button handler.
 2. Put new screen controls in the relevant `ui/view/*View` class (shared helpers go in `ui/common`).
 3. Add or update a model record when the value is part of the store domain.
-4. If persisted fields change, update `CsvPosRepository` and the matching seed header together.
+4. If persisted fields change, update the matching `data/csv/*Csv` class and the seed header together; old `data/` files are then reset automatically on next launch.
 5. Keep the repository interface narrow. Add a method only when the business service needs a new persistence operation.
 6. Preserve the assignment-required collections and handwritten algorithms where they are exercised by the UI.
 

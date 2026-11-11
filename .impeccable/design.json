@@ -1,26 +1,26 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-11-11T19:35:20+08:00",
-  "title": "Design System: Tindahan POS",
+  "title": "Design System: Kofi",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
         "displayName": "Leaf Green",
-        "canonical": "#247351",
-        "tonalRamp": ["#173f2f", "#1d563b", "#247351", "#348b65", "#5ba47e", "#8bbd9f", "#bfdbca", "#edf6f0"]
+        "canonical": "#7b4827",
+        "tonalRamp": ["#1d1712", "#5f381e", "#7b4827", "#995a30", "#c47845", "#b8a590", "#d8cec2", "#f4f2ef"]
       },
       "canvas": {
         "role": "neutral",
         "displayName": "Soft Green Canvas",
-        "canonical": "#f3f5f2",
-        "tonalRamp": ["#424b45", "#5b665f", "#77817a", "#9aa39d", "#bcc4bf", "#d4dad5", "#e5e9e5", "#f3f5f2"]
+        "canonical": "#f5f4f2",
+        "tonalRamp": ["#734424", "#9a5b31", "#c37440", "#a39f9a", "#c4c0bc", "#dad7d4", "#e9e7e5", "#f5f4f2"]
       },
       "sidebar": {
         "role": "neutral",
         "displayName": "Deep Store Green",
-        "canonical": "#1d3029",
-        "tonalRamp": ["#0f1814", "#182720", "#1d3029", "#2b4036", "#40564b", "#688071", "#a7c0b1", "#e0e9e3"]
+        "canonical": "#1a1411",
+        "tonalRamp": ["#0d0a08", "#15110e", "#1a1411", "#241c17", "#7a4826", "#b86d3a", "#c0b4a7", "#e9e5e0"]
       },
       "error": {
         "role": "error",
@@ -47,7 +47,7 @@
       "refersTo": "button-primary",
       "description": "Advances checkout or saves a valid form.",
       "html": "<button class=\"ds-button\">Complete sale</button>",
-      "css": ".ds-button { background: #247351; color: #ffffff; border: 0; border-radius: 6px; padding: 9px 14px; font: 600 13px 'Segoe UI', Arial, sans-serif; } .ds-button:hover { background: #1e6244; } .ds-button:focus-visible { outline: 2px solid #174f38; outline-offset: 2px; } .ds-button:active { background: #174f38; }"
+      "css": ".ds-button { background: #7b4827; color: #ffffff; border: 0; border-radius: 6px; padding: 9px 14px; font: 600 13px 'Segoe UI', Arial, sans-serif; } .ds-button:hover { background: #693e21; } .ds-button:focus-visible { outline: 2px solid #221b16; outline-offset: 2px; } .ds-button:active { background: #221b16; }"
     },
     {
       "name": "Form Input",
@@ -55,7 +55,7 @@
       "refersTo": "input",
       "description": "A familiar editable field with visible focus and error states.",
       "html": "<input class=\"ds-input\" aria-label=\"Search by name or SKU\" placeholder=\"Search by name or SKU\">",
-      "css": ".ds-input { width: 100%; background: #ffffff; color: #23312b; border: 1px solid #cbd6ce; border-radius: 6px; padding: 8px 10px; font: 400 13px 'Segoe UI', Arial, sans-serif; } .ds-input:focus-visible { border-color: #26775c; outline: 2px solid rgba(38, 119, 92, 0.13); } .ds-input[aria-invalid='true'] { border-color: #b33535; }"
+      "css": ".ds-input { width: 100%; background: #ffffff; color: #1c1612; border: 1px solid #d6d1cb; border-radius: 6px; padding: 8px 10px; font: 400 13px 'Segoe UI', Arial, sans-serif; } .ds-input:focus-visible { border-color: #7f4b28; outline: 2px solid rgba(38, 119, 92, 0.13); } .ds-input[aria-invalid='true'] { border-color: #b33535; }"
     },
     {
       "name": "Navigation Item",
@@ -63,14 +63,14 @@
       "refersTo": "navigation-active",
       "description": "Keeps module changes consistent and the active destination visible.",
       "html": "<a class=\"ds-nav\" href=\"#products\" aria-current=\"page\">Products</a>",
-      "css": ".ds-nav { display: block; background: transparent; color: #dae5dd; border-radius: 6px; padding: 11px 13px; font: 600 13px 'Segoe UI', Arial, sans-serif; text-decoration: none; } .ds-nav:hover { background: #2b4338; color: #ffffff; } .ds-nav[aria-current='page'] { background: #315343; color: #ffffff; } .ds-nav:focus-visible { outline: 2px solid #b4d6c2; outline-offset: 2px; }"
+      "css": ".ds-nav { display: block; background: transparent; color: #e5e0da; border-radius: 6px; padding: 11px 13px; font: 600 13px 'Segoe UI', Arial, sans-serif; text-decoration: none; } .ds-nav:hover { background: #251d18; color: #ffffff; } .ds-nav[aria-current='page'] { background: #6c4022; color: #ffffff; } .ds-nav:focus-visible { outline: 2px solid #d2c6b8; outline-offset: 2px; }"
     }
   ],
   "narrative": {
     "northStar": "A calm checkout counter",
-    "overview": "The interface keeps sale math and stock status easy to scan during everyday shop work. A leaf-green accent marks actions and active navigation while a bright, quiet work surface keeps tables and form values legible. The same shell and control language carries across checkout, product maintenance, stock movements, receipts, reports, and settings.",
+    "overview": "The interface keeps sale math and stock status easy to scan during everyday shop work. A coffee-brown accent marks actions and active navigation while a bright, quiet work surface keeps tables and form values legible. The same shell and control language carries across checkout, product maintenance, stock movements, receipts, reports, and settings.",
     "keyCharacteristics": [
-      "Quiet light workspace framed by a deep green navigation rail.",
+      "Quiet light workspace framed by a near-black navigation rail.",
       "Money and quantity values use consistent, clearly grouped numerals.",
       "Errors, warnings, disabled fields, and success messages have distinct states.",
       "Familiar JavaFX controls support keyboard-first operation."
@@ -83,7 +83,7 @@
     ],
     "dos": [
       "Do keep field errors directly beside the field that needs correction.",
-      "Do use the primary green for the action that advances the current task.",
+      "Do use the primary brown for the action that advances the current task.",
       "Do retain a grey treatment for read-only values."
     ],
     "donts": [

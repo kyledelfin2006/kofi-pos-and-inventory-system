@@ -1,19 +1,19 @@
 ---
-name: Tindahan POS
+name: Kofi
 description: A calm offline counter for sales and stock.
 colors:
-  primary: "#247351"
-  primary-hover: "#1e6244"
-  primary-active: "#174f38"
-  canvas: "#f3f5f2"
+  primary: "#7b4827"
+  primary-hover: "#693e21"
+  primary-active: "#221b16"
+  canvas: "#f5f4f2"
   surface: "#ffffff"
-  sidebar: "#1d3029"
-  text: "#23312b"
-  muted-text: "#64736a"
-  border: "#dce4dd"
+  sidebar: "#1a1411"
+  text: "#1c1612"
+  muted-text: "#ab6536"
+  border: "#e4e0dc"
   error: "#b33535"
   warning: "#936619"
-  disabled: "#b8c7bd"
+  disabled: "#c7c0b8"
 typography:
   display:
     fontFamily: "Segoe UI, Arial, sans-serif"
@@ -48,8 +48,8 @@ components:
     rounded: "{rounded.sm}"
     padding: "9px 14px"
   button-secondary:
-    backgroundColor: "#e8f1eb"
-    textColor: "#245d43"
+    backgroundColor: "#f1ede8"
+    textColor: "#6a3e21"
     rounded: "{rounded.sm}"
     padding: "9px 14px"
   input:
@@ -58,7 +58,7 @@ components:
     rounded: "{rounded.sm}"
     padding: "8px 10px"
   navigation-active:
-    backgroundColor: "#315343"
+    backgroundColor: "#6c4022"
     textColor: "{colors.surface}"
     rounded: "{rounded.sm}"
     padding: "11px 13px"
@@ -68,10 +68,10 @@ components:
 
 **Creative North Star: "A calm checkout counter"**
 
-The interface keeps sale math and stock status easy to scan during everyday shop work. A leaf-green accent marks actions and active navigation while a bright, quiet work surface keeps tables and form values legible. The same shell and control language carries across checkout, product maintenance, stock movements, receipts, reports, and settings.
+The interface keeps sale math and stock status easy to scan during everyday shop work. A coffee-brown accent marks actions and active navigation while a bright, quiet work surface keeps tables and form values legible. The same shell and control language carries across checkout, product maintenance, stock movements, receipts, reports, and settings.
 
 **Key Characteristics:**
-- Quiet light workspace framed by a deep green navigation rail.
+- Quiet light workspace framed by a near-black navigation rail.
 - Money and quantity values use consistent, clearly grouped numerals.
 - Errors, warnings, disabled fields, and success messages have distinct states.
 - Familiar JavaFX controls support keyboard-first operation.
@@ -80,7 +80,7 @@ The interface keeps sale math and stock status easy to scan during everyday shop
 
 ## Colors
 
-Leaf green is reserved for primary actions and active states. The dark green rail anchors navigation. Neutral white and soft grey-green surfaces carry tables and forms; red and amber are reserved for errors and warnings.
+Coffee brown is reserved for primary actions and active states. The near-black rail anchors navigation. Neutral white and soft warm grey surfaces carry tables and forms; red and amber are reserved for errors and warnings.
 
 **The Signal Rule.** Use accent color to identify an action or a state, never as decoration.
 
@@ -106,13 +106,13 @@ Use gently rounded corners for fields, buttons, and panels. Read-only fields use
 
 ## Components
 
-Buttons share one shape and clear primary, secondary, quiet, and destructive roles. Inputs use a neutral border, a visible green focus state, and a red invalid state. Tables use restrained striping and a tinted selection row. Navigation uses light text on the dark rail with a stronger green active row.
+Buttons share one shape and clear primary, secondary, quiet, and destructive roles. Inputs use a neutral border, a visible brown focus state, and a red invalid state. Tables use restrained striping and a tinted selection row. Navigation uses light text on the dark rail with a stronger green active row.
 
 ## Do's and Don'ts
 
 ### Do:
 - **Do** keep field errors directly beside the field that needs correction.
-- **Do** use the primary green for the action that advances the current task.
+- **Do** use the primary brown for the action that advances the current task.
 - **Do** retain a grey treatment for read-only values.
 
 ### Don't:

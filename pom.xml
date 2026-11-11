@@ -3,10 +3,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.cc104</groupId>
-    <artifactId>offline-pos</artifactId>
+    <groupId>com.kofi</groupId>
+    <artifactId>kofi-pos</artifactId>
     <version>1.0.0</version>
-    <name>Offline POS and Stock Management</name>
+    <name>Kofi: POS &amp; Inventory Management System</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -34,7 +34,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.cc104.pos.Launcher</mainClass>
+                    <mainClass>com.kofi.pos.Launcher</mainClass>
                 </configuration>
             </plugin>
         </plugins>
