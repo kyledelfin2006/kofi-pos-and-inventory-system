@@ -22,6 +22,7 @@ if not defined MVN (
 )
 if not defined MVN (
   echo Maven not found. Download it from https://maven.apache.org/download.cgi and add its bin folder to PATH.
+  pause
   exit /b 1
 )
 
@@ -30,4 +31,10 @@ if "%~1"=="" (
 ) else (
   call "%MVN%" %*
 )
-exit /b %errorlevel%
+set "RC=%errorlevel%"
+if not "%RC%"=="0" (
+  echo.
+  echo Failed with exit code %RC%.
+  pause
+)
+exit /b %RC%
