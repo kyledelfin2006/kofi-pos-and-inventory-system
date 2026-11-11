@@ -10,9 +10,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Low-level local file store for UTF-8 CSV data and packaged seed files. */
 public final class CsvStore {
     private final Path directory = Path.of("data");
 
+    /** Creates the data directory and copies only seed files that do not exist yet. */
     public void initialize() throws IOException {
         Files.createDirectories(directory);
         for (String file : List.of("products.csv", "users.csv", "sales.csv", "sale_lines.csv",
@@ -26,6 +28,7 @@ public final class CsvStore {
         }
     }
 
+    /** Reads rows while supporting quoted commas, escaped quotes, and embedded line breaks. */
     public List<List<String>> read(String file) throws IOException {
         String text = Files.readString(directory.resolve(file), StandardCharsets.UTF_8);
         List<List<String>> rows = new ArrayList<>();
@@ -67,6 +70,7 @@ public final class CsvStore {
         return rows;
     }
 
+    /** Replaces a CSV file through a temporary sibling to avoid truncated writes. */
     public void write(String file, List<String> header, List<List<String>> records) throws IOException {
         StringBuilder csv = new StringBuilder();
         appendRow(csv, header);

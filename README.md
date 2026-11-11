@@ -14,6 +14,23 @@ First launch copies the demo CSV files from `src/main/resources/seed/` to `data/
 
 Demo sign-in: **admin** / **admin123**
 
+## Developer guide
+
+The app separates JavaFX screens, store rules, domain records, and CSV persistence. Start with these guides before changing a feature:
+
+- [Architecture and SOLID decisions](docs/architecture.md)
+- [Line-by-line code walkthrough](docs/code-walkthrough.md)
+
+The short source map is:
+
+- `PosApp` starts the app and wires the module views.
+- `ui/*View` builds one screen and forwards user actions to `PosService`.
+- `PosService` owns in-memory store state and business rules.
+- `PosRepository` defines persistence; `CsvPosRepository` maps records to CSV; `CsvStore` handles file and CSV mechanics.
+- `model` contains immutable domain records.
+
+Compile with `mvn -DskipTests compile`; launch with `mvn javafx:run`.
+
 ## Modules
 
 - Dashboard: today's completed sales, transaction count, inventory at cost, pending low-stock queue, recent activity.

@@ -62,14 +62,17 @@ Commit small, human-readable seed files under `src/main/resources/seed/`. On fir
 
 CSV values will be quoted/escaped correctly, including commas and quotes in names and notes. File writes will use a temporary sibling file followed by replacement so an interrupted save is less likely to leave a truncated data file. Seed products will represent a small sample shop. Seed login will be `admin` / `admin123`; the CSV stores a salted PBKDF2 password hash, not the plaintext password. This is a demo account and can be changed in the local user CSV.
 
-## Minimal project structure
+## Current project structure
 
 - Maven project targeting Java 17 with JavaFX Controls 21.0.6; no additional runtime libraries.
-- `src/main/java/com/cc104/pos/PosApp.java` — JavaFX entry point, navigation, screens, and field formatters.
-- `src/main/java/com/cc104/pos/data/CsvStore.java` — first-run seed copy, quoted CSV parsing, and atomic file replacement.
-- `src/main/java/com/cc104/pos/service/PosService.java` — in-memory records, nested data models, business validation, CSV persistence calls, and handwritten algorithms.
+- `src/main/java/com/cc104/pos/PosApp.java` — JavaFX entry point, sign-in, navigation, and module wiring.
+- `src/main/java/com/cc104/pos/ui/*View.java` — one JavaFX view per module; `UiSupport` and `ProductTables` hold shared UI pieces.
+- `src/main/java/com/cc104/pos/service/PosService.java` — in-memory store state, business validation, use cases, and handwritten algorithms.
+- `src/main/java/com/cc104/pos/model/` — immutable domain records shared by the service, views, and persistence adapter.
+- `src/main/java/com/cc104/pos/data/PosRepository.java` — persistence port; `CsvPosRepository` maps records and `CsvStore` handles CSV files.
 - `src/main/resources/seed/*.csv` — initial products, demo user, and store settings.
 - `src/main/resources/style.css` — shared JavaFX look and control states.
+- `docs/architecture.md` and `docs/code-walkthrough.md` — dependency map, SOLID choices, and the main code paths explained in order.
 
 Keep screens in Java code unless a view is substantially clearer in FXML. Avoid adding a database, ORM, state-management framework, or extra UI library.
 
@@ -84,8 +87,8 @@ Keep screens in Java code unless a view is substantially clearer in FXML. Avoid 
 
 ## Current implementation status
 
-- The Java sources compile with `javac --release 17` against JavaFX Controls 21.0.6.
-- The current environment has a JDK but no Maven executable, so `mvn javafx:run` could not be exercised here.
+- The Java sources compile with `javac --release 17` against the locally cached JavaFX Controls 21.0.6 jars.
+- Maven is not available in the current environment, so `mvn javafx:run` could not be exercised here.
 - Seed CSVs, all seven modules, local persistence, and the assignment data-structure/algorithm mappings are implemented.
 
 ## Completion checklist

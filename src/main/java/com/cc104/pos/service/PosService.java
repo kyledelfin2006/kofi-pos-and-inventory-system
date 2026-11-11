@@ -1,6 +1,16 @@
 package com.cc104.pos.service;
 
-import com.cc104.pos.data.CsvStore;
+import com.cc104.pos.data.PosRepository;
+import com.cc104.pos.data.StoreData;
+import com.cc104.pos.model.Activity;
+import com.cc104.pos.model.CartLine;
+import com.cc104.pos.model.Product;
+import com.cc104.pos.model.RestockAlert;
+import com.cc104.pos.model.Sale;
+import com.cc104.pos.model.SaleLine;
+import com.cc104.pos.model.Settings;
+import com.cc104.pos.model.StockMovement;
+import com.cc104.pos.model.User;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -25,13 +35,17 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
+/**
+ * In-memory application service for catalogue, checkout, stock, receipts, and reports.
+ * CSV details stay behind {@link PosRepository}; the UI receives snapshots and business operations.
+ */
 public final class PosService {
     private static final BigDecimal ZERO = new BigDecimal("0.00");
     private static final List<String> UNITS = List.of("pc", "kg", "g", "L", "mL", "pack", "box");
     private static final DateTimeFormatter RECEIPT_DATE = DateTimeFormatter.ofPattern("yyyyMMdd", Locale.ROOT);
     private static final Pattern HEX = Pattern.compile("[0-9a-fA-F]+");
 
-    private final CsvStore csv = new CsvStore();
+    private final PosRepository repository;
     private final ArrayList<Product> products = new ArrayList<>();
     private final ArrayList<Sale> sales = new ArrayList<>();
     private final ArrayList<SaleLine> saleLines = new ArrayList<>();
@@ -43,9 +57,17 @@ public final class PosService {
     private Settings settings;
     private long movementId = 1;
 
-    public PosService() throws IOException {
-        csv.initialize();
-        load();
+    /** Loads one store snapshot and rebuilds the activity and low-stock views. */
+    public PosService(PosRepository repository) throws IOException {
+        this.repository = repository;
+        StoreData data = repository.load();
+        products.addAll(data.products());
+        sales.addAll(data.sales());
+        saleLines.addAll(data.saleLines());
+        movements.addAll(data.movements());
+        users.addAll(data.users());
+        settings = data.settings();
+        for (StockMovement movement : movements) movementId = Math.max(movementId, movement.id() + 1);
         restoreActivities();
         refreshRestockQueue();
     }
@@ -54,6 +76,7 @@ public final class PosService {
         return (value == null ? ZERO : value).setScale(2, RoundingMode.HALF_UP);
     }
 
+    /** Checks the entered credentials against the locally stored salted password hashes. */
     public boolean authenticate(String username, String password) {
         if (username == null || password == null) return false;
         String normalized = username.trim();
@@ -90,7 +113,6 @@ public final class PosService {
         return bytes;
     }
 
-    public List<Product> products() { return new ArrayList<>(products); }
     public List<Product> activeProducts() {
         ArrayList<Product> result = new ArrayList<>();
         for (Product product : products) if (product.active()) result.add(product);
@@ -205,6 +227,7 @@ public final class PosService {
         }
     }
 
+    /** Validates and creates or updates a product while preserving its current stock balance. */
     public void saveProduct(String originalSku, String sku, String name, String category, String unit,
                             BigDecimal cost, BigDecimal price, int reorderLevel) throws IOException {
         String cleanSku = sku == null ? "" : sku.trim().toUpperCase(Locale.ROOT);
@@ -319,6 +342,7 @@ public final class PosService {
         return money(tender.subtract(total));
     }
 
+    /** Records one receipt, decrements stock, and adds the corresponding movement audit rows. */
     public Sale checkout(String cashier, BigDecimal discount, BigDecimal tender) throws IOException {
         if (cart.isEmpty()) throw new IllegalArgumentException("Add a product before checkout.");
         validatePrice(discount, "Discount");
@@ -377,6 +401,7 @@ public final class PosService {
         return null;
     }
 
+    /** Marks a completed sale void and restores its quantities through logged stock movements. */
     public void voidSale(String receipt, String reason) throws IOException {
         String cleanReason = reason == null ? "" : reason.trim();
         if (cleanReason.isEmpty() || cleanReason.length() > 150) throw new IllegalArgumentException("Void reason is required and limited to 150 characters.");
@@ -396,6 +421,7 @@ public final class PosService {
         saveAll();
     }
 
+    /** Applies a manual stock movement and refreshes the low-stock queue. */
     public void moveStock(String sku, String type, int quantity, String reason, String reference) throws IOException {
         Product product = findProduct(sku);
         if (product == null || !product.active()) throw new IllegalArgumentException("Choose an active product.");
@@ -438,6 +464,7 @@ public final class PosService {
         restockQueue.addAll(refreshed);
     }
 
+    /** Uses the assignment's recursive calculation to total on-hand inventory cost. */
     public BigDecimal inventoryCostValue() { return inventoryCostValue(0); }
     private BigDecimal inventoryCostValue(int index) {
         if (index >= products.size()) return ZERO;
@@ -479,31 +506,6 @@ public final class PosService {
         }
     }
 
-    private void load() throws IOException {
-        for (List<String> row : dataRows("products.csv")) {
-            products.add(new Product(row.get(0), row.get(1), row.get(2), row.get(3), new BigDecimal(row.get(4)),
-                    new BigDecimal(row.get(5)), Integer.parseInt(row.get(6)), Integer.parseInt(row.get(7)), Boolean.parseBoolean(row.get(8))));
-        }
-        for (List<String> row : dataRows("users.csv")) users.add(new User(row.get(0), row.get(1), row.get(2)));
-        for (List<String> row : dataRows("sales.csv")) {
-            sales.add(new Sale(row.get(0), LocalDateTime.parse(row.get(1)), row.get(2), new BigDecimal(row.get(3)),
-                    new BigDecimal(row.get(4)), new BigDecimal(row.get(5)), new BigDecimal(row.get(6)), new BigDecimal(row.get(7)), row.get(8), row.get(9)));
-        }
-        for (List<String> row : dataRows("sale_lines.csv")) {
-            saleLines.add(new SaleLine(row.get(0), row.get(1), row.get(2), new BigDecimal(row.get(3)), Integer.parseInt(row.get(4)), new BigDecimal(row.get(5))));
-        }
-        for (List<String> row : dataRows("stock_movements.csv")) {
-            long id = Long.parseLong(row.get(0));
-            movementId = Math.max(movementId, id + 1);
-            movements.add(new StockMovement(id, LocalDateTime.parse(row.get(1)), row.get(2), row.get(3), row.get(4),
-                    Integer.parseInt(row.get(5)), row.get(6), row.get(7)));
-        }
-        List<List<String>> savedSettings = dataRows("settings.csv");
-        if (savedSettings.isEmpty()) throw new IOException("settings.csv has no store settings record.");
-        List<String> row = savedSettings.get(0);
-        settings = new Settings(row.get(0), row.get(1), row.get(2));
-    }
-
     private void restoreActivities() {
         ArrayList<Activity> history = new ArrayList<>();
         for (Sale sale : sales) history.add(new Activity(sale.soldAt(), sale.status().equals("VOID") ? "Sale voided" : "Sale completed", sale.receiptNo()));
@@ -521,70 +523,8 @@ public final class PosService {
         for (int i = first; i < history.size(); i++) activities.push(history.get(i));
     }
 
-    private List<List<String>> dataRows(String file) throws IOException {
-        List<List<String>> rows = csv.read(file);
-        return rows.size() <= 1 ? List.of() : rows.subList(1, rows.size());
-    }
-
+    /** Persists a snapshot so the repository never holds mutable service collections. */
     private void saveAll() throws IOException {
-        csv.write("products.csv", List.of("sku", "name", "category", "unit", "cost_price", "selling_price", "reorder_level", "qty_on_hand", "active"),
-                map(products, p -> List.of(p.sku(), p.name(), p.category(), p.unit(), p.costPrice().toPlainString(), p.sellingPrice().toPlainString(),
-                        Integer.toString(p.reorderLevel()), Integer.toString(p.qtyOnHand()), Boolean.toString(p.active()))));
-        csv.write("sales.csv", List.of("receipt_no", "sold_at", "cashier", "subtotal", "discount", "total", "cash_tendered", "change_amount", "status", "void_reason"),
-                map(sales, s -> List.of(s.receiptNo(), s.soldAt().toString(), s.cashier(), s.subtotal().toPlainString(), s.discount().toPlainString(),
-                        s.total().toPlainString(), s.cashTendered().toPlainString(), s.changeAmount().toPlainString(), s.status(), s.voidReason())));
-        csv.write("sale_lines.csv", List.of("receipt_no", "sku", "product_name", "unit_price", "quantity", "line_total"),
-                map(saleLines, line -> List.of(line.receiptNo(), line.sku(), line.productName(), line.unitPrice().toPlainString(),
-                        Integer.toString(line.quantity()), line.lineTotal().toPlainString())));
-        csv.write("stock_movements.csv", List.of("id", "occurred_at", "sku", "product_name", "type", "quantity", "reason", "reference"),
-                map(movements, m -> List.of(Long.toString(m.id()), m.occurredAt().toString(), m.sku(), m.productName(), m.type(),
-                        Integer.toString(m.quantity()), m.reason(), m.reference())));
-        csv.write("settings.csv", List.of("store_name", "store_address", "receipt_footer"),
-                List.of(List.of(settings.storeName(), settings.storeAddress(), settings.receiptFooter())));
-    }
-
-    private static <T> List<List<String>> map(List<T> source, java.util.function.Function<T, List<String>> mapper) {
-        ArrayList<List<String>> result = new ArrayList<>();
-        for (T value : source) result.add(mapper.apply(value));
-        return result;
-    }
-
-    public static final class Product {
-        private final String sku, name, category, unit;
-        private final BigDecimal costPrice, sellingPrice;
-        private final int reorderLevel, qtyOnHand;
-        private final boolean active;
-
-        public Product(String sku, String name, String category, String unit, BigDecimal costPrice,
-                       BigDecimal sellingPrice, int reorderLevel, int qtyOnHand, boolean active) {
-            this.sku = sku; this.name = name; this.category = category; this.unit = unit;
-            this.costPrice = money(costPrice); this.sellingPrice = money(sellingPrice);
-            this.reorderLevel = reorderLevel; this.qtyOnHand = qtyOnHand; this.active = active;
-        }
-        public String sku() { return sku; }
-        public String name() { return name; }
-        public String category() { return category; }
-        public String unit() { return unit; }
-        public BigDecimal costPrice() { return costPrice; }
-        public BigDecimal sellingPrice() { return sellingPrice; }
-        public int reorderLevel() { return reorderLevel; }
-        public int qtyOnHand() { return qtyOnHand; }
-        public boolean active() { return active; }
-        public Product withQuantity(int quantity) { return new Product(sku, name, category, unit, costPrice, sellingPrice, reorderLevel, quantity, active); }
-        public Product withActive(boolean value) { return new Product(sku, name, category, unit, costPrice, sellingPrice, reorderLevel, qtyOnHand, value); }
-    }
-
-    public record CartLine(Product product, int quantity) { }
-    public record SaleLine(String receiptNo, String sku, String productName, BigDecimal unitPrice, int quantity, BigDecimal lineTotal) { }
-    public record StockMovement(long id, LocalDateTime occurredAt, String sku, String productName, String type, int quantity, String reason, String reference) { }
-    public record Activity(LocalDateTime occurredAt, String action, String detail) { }
-    public record RestockAlert(String sku, String productName, int quantity, int reorderLevel) { }
-    public record User(String username, String salt, String passwordHash) { }
-    public record Settings(String storeName, String storeAddress, String receiptFooter) { }
-    public record Sale(String receiptNo, LocalDateTime soldAt, String cashier, BigDecimal subtotal, BigDecimal discount,
-                       BigDecimal total, BigDecimal cashTendered, BigDecimal changeAmount, String status, String voidReason) {
-        public Sale voided(String reason) {
-            return new Sale(receiptNo, soldAt, cashier, subtotal, discount, total, cashTendered, changeAmount, "VOID", reason);
-        }
+        repository.save(new StoreData(products, sales, saleLines, movements, users, settings));
     }
 }
