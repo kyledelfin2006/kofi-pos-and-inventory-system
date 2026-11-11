@@ -12,6 +12,8 @@ Install JDK 17 or newer, then run from the project directory:
 
 `run.cmd` calls Maven (`javafx:run`), so Maven recompiles any changed source files on every launch; code edits are picked up automatically. It uses `mvn` from your PATH if present; otherwise it falls back to a Maven copy cached in `%USERPROFILE%\.m2\wrapper`, and sets `JAVA_HOME` from `C:\Program Files\Java\jdk-*` when unset. Extra arguments are passed to Maven, e.g. `.\run.cmd -DskipTests compile`.
 
+**Running from an IDE:** open the project as a Maven project (so the JavaFX dependencies load), then run `com.cc104.pos.Launcher`, not `PosApp`. Running `PosApp` directly fails with "JavaFX runtime components are missing" because it extends `Application`.
+
 If you see "Maven not found", download Maven from <https://maven.apache.org/download.cgi>, unzip it, and add its `bin` folder to PATH (there is no winget package for it). Then plain `mvn javafx:run` also works.
 
 First launch copies the demo CSV files from `src/main/resources/seed/` to `data/`. Changes are saved in `data/` and survive restarts. Back up that folder to preserve the store's records.
