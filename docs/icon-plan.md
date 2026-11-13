@@ -13,7 +13,7 @@ Seven square illustrations (1024–2048 px) in `assets/`. Each is a drawing on a
 | Chicken Fillet with Rice | `Chicken_Fillet_And_Rice_Icon.png` | `chicken-fillet-with-rice.png` | 1 |
 | Carbonara | `Carbona_Icon.png` | `carbonara.png` | 1 |
 | Chicken Sandwich | `Chicken_Sandwich_Icon.png` | `chicken-sandwich.png` | 1 |
-| French Fries | — none yet — | `placeholder-food.png` | 1 |
+| French Fries | `FRIES_ICON.png` | `french-fries.png` | 1 |
 
 Packaged copies are 320 px so they stay sharp at the largest size we show (about 150 px on a high-DPI screen) without loading 2 MB images.
 
