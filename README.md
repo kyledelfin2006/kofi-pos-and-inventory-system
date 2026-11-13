@@ -1,78 +1,84 @@
-# Kofi: POS & Inventory Management System
+<div align="center">
+  <img src="assets/Kofi_Logo_Text.png" alt="Kofi logo" width="360">
+  <h1>Kofi POS &amp; Inventory</h1>
+  <p><strong>Point of sale and inventory for a local coffee shop, ready to run offline.</strong></p>
+  <p>Built with Java 17 and JavaFX for a small coffee shop — and for a CC 104 project that puts data structures and algorithms to work.</p>
+</div>
 
-An offline JavaFX point-of-sale and inventory-management desktop application for a coffee shop for the CC 104 final project. Runtime records are held in Java collections and saved locally as CSV; there is no SQL database or network service.
+## Take a look
 
-## Run
+![Kofi point-of-sale screen showing the product menu and current sale panel](assets/POS_Screenshot.png)
 
-Install JDK 17 or newer, then run from the project directory:
+## What is Kofi?
+
+Kofi is a desktop point-of-sale and inventory app for a single local shop. Cashiers can build a cart, take cash, and create receipts; owners can manage the menu, track stock movements, and review sales from the same application.
+
+At runtime, the app works without internet. It keeps live records in Java collections and saves them as local CSV files, so there is no SQL database or network service to set up.
+
+## What you can do
+
+- **Ring up a sale:** Find products by name or SKU, edit quantities, apply a discount, enter cash tendered, and see the change due.
+- **Manage the menu:** Add, edit, search, sort, deactivate, or remove products.
+- **Track stock:** Record stock coming in, stock going out, and adjustments; review movement history and low-stock alerts.
+- **Review transactions:** Search and sort sales, open receipt details, or void a sale with a reason and restore its stock.
+- **Check the business:** See today's sales and recent activity on the dashboard, then view date-filtered sales and inventory cost reports.
+- **Set up the shop:** Customize the store name, address, receipt footer, and sample data from Settings.
+
+## Get started
+
+### Requirements
+
+- JDK 17 or newer
+- Maven (or use `run.cmd` on Windows if Maven is available through PATH or the local Maven cache)
+
+### Launch
+
+On Windows, run:
 
 ```powershell
 .\run.cmd
 ```
 
-`run.cmd` calls Maven (`javafx:run`), so Maven recompiles any changed source files on every launch; code edits are picked up automatically. It uses `mvn` from your PATH if present; otherwise it falls back to a Maven copy cached in `%USERPROFILE%\.m2\wrapper`, and sets `JAVA_HOME` from `C:\Program Files\Java\jdk-*` when unset. Extra arguments are passed to Maven, e.g. `.\run.cmd -DskipTests compile`.
+With Maven on your PATH, launch on any platform with:
 
-**Running from an IDE:** open the project as a Maven project (so the JavaFX dependencies load), then run `com.kofi.pos.Launcher` (also the `run.cmd` / `javafx:run` entry point), not `PosApp`. Running `PosApp` directly fails with "JavaFX runtime components are missing" because it extends `Application`.
+```shell
+mvn javafx:run
+```
 
-If you see "Maven not found", download Maven from <https://maven.apache.org/download.cgi>, unzip it, and add its `bin` folder to PATH (there is no winget package for it). Then plain `mvn javafx:run` also works.
+To open the project in an IDE, import it as a Maven project and run `com.kofi.pos.Launcher`.
 
-First launch copies the default CSV files from `src/main/resources/seed/` to `data/`. If `data/` holds files from an older layout (different column headers), the app restores the defaults automatically. Changes are saved in `data/` and survive restarts. Back up that folder to preserve the store's records. To return to the sample data at any time, use Settings > Reset data to default.
+### Demo sign-in
 
-Demo sign-in: **admin** / **admin123**
+- **Username:** `admin`
+- **Password:** `admin123`
 
-## Developer guide
+## Your local data
 
-The app separates JavaFX screens, store rules, domain records, and CSV persistence. Start with these guides before changing a feature:
+- On first launch, Kofi copies its starter CSV files from `src/main/resources/seed/` into `data/`.
+- Changes are saved locally and remain after the app closes.
+- Back up the `data/` folder to keep a copy of the shop's records.
+- Choose **Settings → Reset data to default** to restore the starter data.
+- The sample menu includes 20 products: four coffee drinks in four sizes each, plus four food items. Starter prices, costs, and stock counts are placeholders; replace them with your shop's values.
 
-- [Architecture and SOLID decisions](docs/architecture.md)
-- [Line-by-line code walkthrough](docs/code-walkthrough.md)
-- [Requirements traceability: where each data structure and algorithm is used](requirements.md)
+## Built for CC 104
 
-The short source map is:
+Required structures and algorithms support real app workflows:
 
-- `Launcher` is the entry point; `app/PosApp` starts the app and wires the module views.
-- `ui/view/*View` builds one screen and forwards user actions to `PosService`; `ui/common` holds shared UI helpers.
-- `algorithm/` holds the hand-written sorts, searches and recursion; `security/` and `util/` hold password checking and money rounding.
-- `PosService` owns in-memory store state and business rules.
-- `PosRepository` defines persistence; `CsvPosRepository` coordinates it; `data/csv/` holds one layout class per file (`ProductCsv`, `SaleCsv`, ...), the generic `CsvTable`, and `CsvStore` (file and CSV mechanics).
-- `model` contains immutable domain records.
+- **Collections:** `ArrayList` for products and records, `LinkedList` for the editable POS cart, `Stack` for recent activity, and `Queue` for FIFO low-stock alerts.
+- **Searching:** Linear search for product and receipt filters; binary search for exact SKU lookup in a sorted snapshot.
+- **Sorting:** Handwritten insertion sort and selection sort for product, sale, and stock views.
+- **Recursion:** Inventory valuation at cost.
 
-Package root is `com.kofi.pos`. Compile with `mvn -DskipTests compile`; launch with `mvn javafx:run`.
+## Under the hood
 
-## Default menu data
+- **Platform:** JavaFX desktop app
+- **Language:** Java 17
+- **Build:** Maven
+- **Persistence:** Local CSV files; runtime records are held in Java collections
+- **Package root:** `com.kofi.pos`
 
-The seed in `src/main/resources/seed/products.csv` has 20 items: four coffees (Spanish Latte, Caramel Latte, Café Latte, Americano) in four sizes each (Hot 8 oz and 12 oz, Iced 16 oz and 22 oz), plus Chicken Fillet with Rice, Carbonara, Chicken Sandwich and French Fries. Each size is its own SKU (e.g. `COF-SPL-I16`). **Prices, costs and the starting stock of 50 per item are placeholders**; edit the seed file (or the Products screen) with the real values.
+The app is organized into JavaFX views, store rules, domain models, and CSV persistence. For the implementation details, see:
 
-## Assets
-
-| Folder | Purpose |
-|---|---|
-| `assets/` | Original logo artwork (`Kofi_Logo.png`, `Kofi_Logo_Text.png`). |
-| `src/main/resources/assets/branding/` | Resized logos used by the login screen and sidebar. |
-| `src/main/resources/assets/products/` | One icon per menu item, named after the product (`spanish-latte.png`, `french-fries.png`; every size of a drink shares one icon), plus `placeholder-coffee.png` and `placeholder-food.png` for products with no icon. The full-size source art is in `assets/`. See [docs/icon-plan.md](docs/icon-plan.md). |
-| `assets/products/` (optional, next to the app) | Drop real product photos here and put the file name in the product's `image` column. |
-
-`AssetLoader` falls back to the placeholders, so a missing picture never breaks a screen.
-
-## Modules
-
-- Dashboard: today's completed sales, transaction count, inventory at cost, pending low-stock queue, recent activity.
-- Point of Sale: 250 ms name/SKU search, quantity editing, discount, cash, change, receipt creation.
-- Products: add, view, update, delete/deactivate, search, and manual sort.
-- Stock: stock in, stock out, downward adjustment, and movement history.
-- Sales & Receipts: search and sort receipts, view line details, void with a reason, restore stock.
-- Reports: date-filter completed sales and view inventory cost value.
-- Settings: store name, address, receipt footer, and **Reset data to default** (restores the CSVs in `src/main/resources/seed/` after confirmation).
-
-## CC 104 structures and algorithms
-
-- `ArrayList`: products, sales, sale lines, stock movements, and users.
-- `LinkedList`: editable POS cart lines.
-- `Stack`: most recent activity entries.
-- `Queue`: low-stock restock alerts, presented FIFO.
-- Linear search: product and receipt filters.
-- Binary search: exact SKU lookup against a manually SKU-sorted snapshot.
-- Insertion sort: product name and newest-sale ordering.
-- Selection sort: stock quantity and sale total ordering.
-- Recursion: inventory valuation at cost.
-
+- [Architecture and design decisions](docs/architecture.md)
+- [Code walkthrough](docs/code-walkthrough.md)
+- [Requirements traceability](requirements.md)
