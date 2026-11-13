@@ -60,7 +60,7 @@ Commit small, human-readable seed files under `src/main/resources/seed/`. On fir
 | `stock_movements.csv` | `id,occurred_at,sku,product_name,type,quantity,reason,reference` |
 | `settings.csv` | `store_name,store_address,receipt_footer` |
 
-CSV values will be quoted/escaped correctly, including commas and quotes in names and notes. File writes will use a temporary sibling file followed by replacement so an interrupted save is less likely to leave a truncated data file. Seed products are the Kofi menu: 16 coffee SKUs (4 drinks x Hot 8/12 oz, Iced 16/22 oz) and 4 food items, with placeholder prices and a starting stock of 50 each. Seed login will be `admin` / `admin123`; the CSV stores a salted PBKDF2 password hash, not the plaintext password. This is a demo account and can be changed in the local user CSV.
+CSV values will be quoted/escaped correctly, including commas and quotes in names and notes. File writes will use a temporary sibling file followed by replacement so an interrupted save is less likely to leave a truncated data file. Seed products are the Kofi menu: 16 coffee SKUs (4 drinks x Hot 8/12 oz, Iced 16/22 oz) and 4 food items, with placeholder prices and a starting stock of 0 each (stock is added on the Stock screen). Seed login will be `admin` / `admin123`; the CSV stores a salted PBKDF2 password hash, not the plaintext password. This is a demo account and can be changed in the local user CSV.
 
 ## Current project structure
 

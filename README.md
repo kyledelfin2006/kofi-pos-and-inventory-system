@@ -41,7 +41,7 @@ Package root is `com.kofi.pos`. Compile with `mvn -DskipTests compile`; launch w
 
 ## Default menu data
 
-The seed in `src/main/resources/seed/products.csv` has 20 items: four coffees (Spanish Latte, Caramel Latte, Café Latte, Americano) in four sizes each (Hot 8 oz and 12 oz, Iced 16 oz and 22 oz), plus Chicken Fillet with Rice, Carbonara, Chicken Sandwich and French Fries. Each size is its own SKU (e.g. `COF-SPL-I16`). **Prices, costs and the starting stock of 50 per item are placeholders**; edit the seed file (or the Products screen) with the real values.
+The seed in `src/main/resources/seed/products.csv` has 20 items: four coffees (Spanish Latte, Caramel Latte, Café Latte, Americano) in four sizes each (Hot 8 oz and 12 oz, Iced 16 oz and 22 oz), plus Chicken Fillet with Rice, Carbonara, Chicken Sandwich and French Fries. Each size is its own SKU (e.g. `COF-SPL-I16`). **Prices and costs are placeholders, and every item starts at stock 0 (add stock on the Stock screen)**; edit the seed file (or the Products screen) with the real values.
 
 ## Assets
 
