@@ -10,7 +10,9 @@ import javafx.beans.property.ReadOnlyStringWrapper;   // Text cell value.
 import javafx.collections.FXCollections;              // Observable lists.
 import javafx.geometry.Insets;                        // Padding.
 import javafx.scene.Node;                             // Base visual type.
+import javafx.scene.control.Alert;                    // Confirmation pop-up.
 import javafx.scene.control.Button;                   // Button.
+import javafx.scene.control.ButtonType;               // OK / Cancel.
 import javafx.scene.control.ComboBox;                 // Drop-down.
 import javafx.scene.control.Label;                    // Text.
 import javafx.scene.control.TableColumn;              // Column.
@@ -72,11 +74,40 @@ public final class StockView {
         history.setPrefHeight(620);
         history.setPlaceholder(new Label("Stock changes will appear here."));
         VBox log = panel("Movement history", history);
-        HBox body = new HBox(18, form, log);
+        HBox body = new HBox(18, new VBox(18, form, resetPanel()), log);
         form.setPrefWidth(350);
         HBox.setHgrow(log, Priority.ALWAYS);
         root.getChildren().add(body);
         return root;
+    }
+
+    /** The danger-zone card that sets every product's stock to 0 after a confirmation. */
+    private VBox resetPanel() {
+        Label description = new Label("Sets the stock of every product to 0 and logs it in the movement history. Products, prices and sales are kept.");
+        description.setWrapText(true);
+        description.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE); // Let the text wrap instead of cutting off with "...".
+        description.getStyleClass().add("muted-text");
+        Label error = errorLabel();
+        Button reset = new Button("Reset inventory to 0");
+        reset.getStyleClass().add("danger-button");
+        reset.setMaxWidth(Double.MAX_VALUE);
+        reset.setOnAction(event -> {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
+                    "Every product's stock will be set to 0 and any open cart will be cleared. Continue?",
+                    ButtonType.CANCEL, ButtonType.OK);
+            confirm.initOwner(reset.getScene().getWindow());        // Centre over the main window.
+            confirm.setTitle("Reset inventory");
+            confirm.setHeaderText("Set all inventory to 0?");
+            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
+            try {
+                service.resetInventoryToZero();
+                notice.accept("Inventory reset to 0");
+                navigate.accept("Stock");                            // Reload the screen with the new history.
+            } catch (IOException e) { error.setText("Could not reset inventory: " + e.getMessage()); }
+        });
+        VBox panel = panel("Reset inventory", description, error, reset);
+        panel.setPrefWidth(350);
+        return panel;
     }
 
     /** Builds the "New movement" form with live validation. */

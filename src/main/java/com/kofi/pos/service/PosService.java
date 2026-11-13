@@ -420,6 +420,25 @@ public final class PosService {
         saveAll();
     }
 
+    /**
+     * Sets every product's stock to 0 (sales and products are kept). Each product that had stock gets an "Adjust"
+     * movement for the removed quantity, so the movement history still adds up and the reset is auditable.
+     */
+    public void resetInventoryToZero() throws IOException {
+        LocalDateTime now = LocalDateTime.now();
+        for (int i = 0; i < products.size(); i++) {                  // Visit every product by position.
+            Product product = products.get(i);
+            if (product.qtyOnHand() == 0) continue;                  // Already empty: nothing to log.
+            movements.add(new StockMovement(nextMovementId(), now, product.sku(), product.displayName(), "Adjust",
+                    product.qtyOnHand(), "Inventory reset to 0", ""));
+            products.set(i, product.withQuantity(0));                // Replace the record with a zero-stock copy.
+        }
+        cart.clear();                                                // Nothing can be sold from empty shelves.
+        activities.push(new Activity(now, "Inventory reset", "All stock set to 0")); // STACK push.
+        refreshRestockQueue();                                       // Every active product is now at or below its reorder level.
+        saveAll();
+    }
+
     private long nextMovementId() { return movementId++; } // Returns the current id, then increments it.
 
     /**
