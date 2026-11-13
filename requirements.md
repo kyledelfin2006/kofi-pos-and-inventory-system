@@ -2,6 +2,8 @@
 
 This file maps every required data structure and algorithm to **where** it lives in the code and **how** the running system uses it. All of it is implemented in this project; nothing here is missing.
 
+Each requirement below has the same parts: **Where** it lives, the **code** itself, **How it was implemented** (a step-by-step walk through that code), **How to use it in the app** (steps you can follow on screen) and **Seen in the UI**.
+
 > Rule from the brief: searching and sorting must be the student's own implementation. `Collections.sort()`, `List.sort()`, `Arrays.binarySearch()` and similar built-ins are **not** used for any of them. The hand-written algorithms are in [`algorithm/`](src/main/java/com/kofi/pos/algorithm/).
 
 | # | Required concept | Required application | Status |
@@ -33,9 +35,12 @@ public List<Activity> recentActivities() {                  // read newest-first
 }
 ```
 
-**Explanation:** `push` places the newest activity on top of the stack. `recentActivities()` walks from the top (last index) down to the bottom, so the most recent action is shown first — last in, first out.
-
-**How:** each completed sale, voided sale and stock movement does `activities.push(...)`. `recentActivities()` reads the stack **from the top downward**, so the newest action is first (LIFO). On startup the stack is rebuilt from saved sales and movements, keeping the latest 20.
+**How it was implemented:**
+1. **Choose the structure.** The activity feed must show the newest action first, which is last in, first out, so it is held in a `java.util.Stack<Activity>`. It is a field of `PosService`, so every screen reads the same stack.
+2. **Push on every action.** Three service methods end by calling `activities.push(new Activity(time, title, detail))`: `checkout` ("Sale completed" with the receipt and total), `voidSale` ("Sale voided" with the reason) and `moveStock` (the movement type with the product and quantity). Whatever was pushed last sits on top.
+3. **Read from the top.** `recentActivities()` copies the stack into a list by counting from the last index down to 0, because the top of a `Stack` is its last index. The newest action therefore comes out first. It returns a copy so a screen cannot change the stack.
+4. **Rebuild at startup.** The stack lives in memory only. `restoreActivities()` (called from `applySnapshot` on start and after a reset) turns the saved sales and stock movements into activities, orders them oldest-first with the hand-written insertion sort, keeps the latest 20 and pushes them in that order, so the newest ends on top again.
+5. **Show it.** `DashboardView` fills the Overview "Recent activity" table from `recentActivities()`.
 
 **How to use it in the app:**
 1. Open **Point of sale**, add a product to the cart, enter *Cash tendered* and press **Complete sale**.
@@ -60,9 +65,12 @@ restockQueue.addAll(refreshed);
 restockQueue.peek();                                                    // nextRestockAlert: look at the front
 ```
 
-**Explanation:** alerts are added at the back (`add`) and read from the front (`peek`), so the product that ran low first is dealt with first — first in, first out. The queue is rebuilt on every stock change so recovered products drop out while waiting ones keep their place.
-
-**How:** a product whose stock falls to or below its reorder level joins the **back** of the queue; products already waiting keep their position (first in, first out); products that have been restocked leave the queue. The dashboard's **Receive next restock** button takes the **front** of the queue (`peek`) and opens the Stock screen on that product.
+**How it was implemented:**
+1. **Choose the structure.** The product that ran low first should be restocked first, which is first in, first out, so the waiting list is a `Queue<RestockAlert>` backed by an `ArrayDeque`. A `RestockAlert` holds the SKU, name, quantity on hand and reorder level.
+2. **Keep it current.** `refreshRestockQueue()` runs after every change that can alter stock or a reorder level: `saveProduct`, `deleteProduct`, `checkout`, `voidSale`, `moveStock`, `restoreDefaultStock`, and when data is loaded or reset.
+3. **Rebuild in two passes into a new `ArrayDeque`.** Pass 1 walks the old queue front to back and keeps each alert whose product is still active and at or below its reorder level (with fresh numbers), so waiting products keep their place and restocked or deleted ones drop out. Pass 2 walks the products and appends any active product at or below its reorder level that is not already queued (a `HashSet` of SKUs tracks this), so newly low products join at the back. The live queue is then cleared and refilled from the new one.
+4. **Read the front.** `nextRestockAlert()` returns `restockQueue.peek()` wrapped in an `Optional` (empty when nothing is waiting). `restockAlerts()` returns a copy in first-in-first-out order and `pendingRestockCount()` returns the size.
+5. **Use it.** `DashboardView` lists the alerts. **Receive next restock** is disabled when the queue is empty; otherwise it calls `nextRestockAlert()` and opens the Stock screen with that SKU preselected. When a *Stock In* lifts the product above its reorder level, `moveStock` calls `refreshRestockQueue()` and the product leaves the queue.
 
 **How to use it in the app:**
 1. Open **Stock** and record a *Stock Out* that takes a product to its reorder level or below. With the default data (stock 50, reorder level 10) take out 40 or more.
@@ -77,8 +85,15 @@ restockQueue.peek();                                                    // nextR
 **Where:** [`RecursiveAlgorithms.sum`](src/main/java/com/kofi/pos/algorithm/RecursiveAlgorithms.java) (line 12) with the recursive helper `sumFrom` (line 20).
 
 ```java
-if (index >= items.size()) return BigDecimal.ZERO;                  // base case
-return amountOf.apply(items.get(index)).add(sumFrom(items, index + 1, amountOf)); // recursive case
+// RecursiveAlgorithms
+public static <T> BigDecimal sum(List<T> items, Function<T, BigDecimal> amountOf) {
+    return sumFrom(items, 0, amountOf);                                // start at the first element
+}
+
+private static <T> BigDecimal sumFrom(List<T> items, int index, Function<T, BigDecimal> amountOf) {
+    if (index >= items.size()) return BigDecimal.ZERO;                 // base case: nothing left to add
+    return amountOf.apply(items.get(index)).add(sumFrom(items, index + 1, amountOf)); // recursive case
+}
 ```
 
 ```java
@@ -89,9 +104,13 @@ public BigDecimal inventoryCostValue() {
 }
 ```
 
-**Explanation:** the problem "sum the list from position *i*" is reduced to the smaller problem "sum the list from position *i+1*". The base case (no items left returns zero) stops the recursion, and each call then adds its own item's amount on the way back up.
-
-**How:** `PosService.inventoryCostValue()` calls it to total *cost price × quantity on hand* across all products: the total for position *i* is that product's value plus the total of positions *i+1 … end*.
+**How it was implemented:**
+1. **Find the self-similar problem.** The total of a list from position *i* is this item's amount plus the total of the list from position *i+1*. That is the same problem on a smaller list, which is what recursion needs.
+2. **Write the entry point.** `sum(items, amountOf)` only starts the work: it calls `sumFrom(items, 0, amountOf)`. `amountOf` is a `Function` saying what amount to take from each item, so the same method totals any list of anything.
+3. **Write the base case first.** In `sumFrom`, when `index` is past the end of the list there is nothing left to add, so it returns `BigDecimal.ZERO`. Without this the recursion would never stop.
+4. **Write the recursive case.** Otherwise it returns the current item's amount plus `sumFrom(..., index + 1, ...)`. Each call waits for the next one until the base case answers, then the amounts add back up the chain.
+5. **Apply it.** `PosService.inventoryCostValue()` passes the product list and `p -> costPrice × qtyOnHand`, then rounds the result with `Money.of`. The depth equals the number of products, which is small for a menu.
+6. **Show it.** `DashboardView` shows the result as "Inventory at cost" and `ReportsView` as "Current inventory at cost". It is recalculated each time a screen opens, so it reflects the latest stock.
 
 **How to use it in the app:**
 1. Open **Overview** and read **Inventory at cost**. This is the recursive total of cost price × quantity for every product.
@@ -112,9 +131,12 @@ private final ArrayList<StockMovement> movements = new ArrayList<>();
 private final ArrayList<User> users = new ArrayList<>();
 ```
 
-**Explanation:** an `ArrayList` is a resizable array with fast indexed access, which suits record collections that are loaded once, read often and occasionally appended to or replaced.
-
-**How:** every persistent record type is held in an `ArrayList` while the app runs. CSV rows are loaded into them at startup (`applySnapshot`) and they are written back after every change (`saveAll`). Adding, replacing (`set`) and removing products, sales and stock movements all go through these lists (`saveProduct`, `deleteProduct`, `checkout`, `voidSale`, `moveStock`).
+**How it was implemented:**
+1. **Choose the structure.** Records are loaded once, read often and changed occasionally, and the screens want them in order with fast access by position, which is what an `ArrayList` gives. `PosService` holds one list per record type: products, sales, sale lines, stock movements and users.
+2. **Load.** `applySnapshot(...)` clears each list and fills it with `addAll` from the stored snapshot (the CSV files read by `CsvStore`). It runs at startup and after "Reset data to default".
+3. **Change in memory.** Records are immutable Java records, so "editing" means putting a new copy in the list. Create: `products.add(...)` (new products start with 0 stock). Update: `products.set(products.indexOf(existing), updatedCopy)`. Delete: `products.remove(product)` when nothing refers to it, otherwise `set` replaces it with an inactive copy (`withActive(false)`) so old receipts stay valid. Sales use `sales.add` and `saleLines.addAll`; voiding replaces the sale with `sales.set`; every stock change appends to `movements`.
+4. **Save.** Each of these methods ends with `saveAll()`, which hands a snapshot of the lists to the repository to write the CSV files.
+5. **Read.** Methods such as `movements()` and `activeProducts()` return copies, so a screen can never modify the service's own lists.
 
 **How to use it in the app:**
 1. Open **Products** and press **New product**, fill in the form and press **Save product**. The record is appended to the list and appears in the table.
@@ -137,9 +159,13 @@ cart.removeIf(line -> line.product().sku().equalsIgnoreCase(sku)); // removeFrom
 cart.clear();                                                    // clearCart: empty the list
 ```
 
-**Explanation:** each `CartLine` (product + quantity) is one node in a doubly linked list. Appending at the tail is cheap, and removing a node from the middle only re-links its neighbours instead of shifting every later element as an array would.
-
-**How:** the shopping cart is a `LinkedList`, because items are appended at the end as the cashier scans them and are frequently removed from the middle (the *Remove* button on a line). `addToCart` walks the list for an existing line and either bumps its quantity or appends a new `CartLine`; `removeFromCart` unlinks every matching node.
+**How it was implemented:**
+1. **Choose the structure.** Cart lines are appended as the cashier adds items and are often removed from the middle. In a `LinkedList` the tail append is cheap and removing a node only re-links its neighbours, so the cart is a `LinkedList<CartLine>`. A `CartLine` is a product plus a quantity.
+2. **Add.** `addToCart(sku)` finds the product with binary search, rejects inactive or out-of-stock items, then walks the list. If a line for that SKU exists it calls `setCartQuantity(sku, quantity + 1)`; otherwise `cart.add(new CartLine(product, 1))` appends a new node at the tail.
+3. **Change a quantity.** `setCartQuantity` checks the quantity against stock, finds the line and replaces it with `cart.set(i, new CartLine(product, quantity))` (a `CartLine` is immutable).
+4. **Remove.** `removeFromCart` calls `cart.removeIf(...)`, which unlinks every line with that SKU, and `clearCart` calls `cart.clear()`.
+5. **Keep it consistent.** After a product is edited, `refreshCartProductRefs()` swaps the fresh `Product` into each line. `checkout` walks the list to build the receipt lines, re-checks stock for each, then clears the cart.
+6. **Show it.** `cart()` returns a copy, which the Point of sale screen shows in the "Current sale" table.
 
 **How to use it in the app:**
 1. Open **Point of sale** and tap a product (choose a size for drinks). A line is appended to **Current sale**.
@@ -165,9 +191,12 @@ public static <T> int linearSearch(List<T> items, Predicate<T> matches) {
 }
 ```
 
-**Explanation:** the loop checks each record from the front until the test passes, returning its index (or `-1`). No ordering is needed, so it works on any list.
-
-**How:** it starts at index 0 and tests each element in turn until one matches or the list ends — O(n). This is the right choice for unsorted data and for partial-text ("contains") matching.
+**How it was implemented:**
+1. **Make it generic.** `linearSearch(List<T> items, Predicate<T> matches)` works on any list. The caller supplies the test as a lambda, so the algorithm does not need to know what a record is.
+2. **Walk the list.** A `for` loop starts at index 0 and calls `matches.test(...)` on each element. The first element that passes ends the search and its index is returned; if the loop finishes, it returns `-1`.
+3. **Use it where order is unknown.** `PosService.sale(receipt)` calls it with `s -> s.receiptNo().equalsIgnoreCase(receipt)`. Sales are stored in time order, not receipt order, so there is nothing to halve and a linear scan is the right tool.
+4. **Use it for partial text.** `searchProducts(query)` uses the same scan written inline: it checks every active product and keeps each one whose name or SKU contains the typed text, so it returns all the matches, not just the first.
+5. **Show it.** The Point of sale search box (about 250 ms after typing stops), Stock "Find product", the Products filter and the Sales & Receipts search all call these methods.
 
 **How to use it in the app:** type part of a name or SKU (for example `latte` or `CRL`) in the **Point of sale** search box, the **Products** search box, or **Stock ▸ Find product**. The list narrows to every match.
 
@@ -192,9 +221,12 @@ public static <T> int binarySearch(List<T> sortedItems, ToIntFunction<T> compare
 }
 ```
 
-**Explanation:** each pass looks at the middle element and throws away the half that cannot contain the key, so the range shrinks quickly (O(log n)). The list must already be sorted, which is why `binarySearchBySku` sorts by SKU first.
-
-**How:** products are first sorted by SKU with the hand-written insertion sort (binary search requires sorted input), then the search repeatedly compares the middle element with the key and discards the half that cannot contain it — O(log n). It is used for exact SKU lookups: adding to cart, stock movements and the duplicate-SKU check on the Products form.
+**How it was implemented:**
+1. **Make it generic.** `binarySearch(sortedItems, compareToKey)` takes a function that compares one element with the key and returns negative, zero or positive. The algorithm never needs to know what the key is.
+2. **Track a range.** `low` and `high` mark the part of the list that could still hold the key. Each pass looks at `mid = low + (high - low) / 2` (written this way to avoid integer overflow) and compares it with the key.
+3. **Halve the range.** Zero means found, so it returns `mid`. A negative result means the middle sorts before the key, so `low = mid + 1`; otherwise `high = mid - 1`. When `low` passes `high` the range is empty and it returns `-1`.
+4. **Give it sorted data.** Products are kept in the order they were entered, not SKU order, so `binarySearchBySku(sku)` first sorts a copy by SKU (case-insensitive) with the hand-written insertion sort, then searches it with `p -> p.sku().compareToIgnoreCase(key)`.
+5. **Route lookups through it.** `findProduct(sku)` and `skuExists(sku, exceptSku)` call `binarySearchBySku`. That covers adding to the cart, changing a quantity, checkout, stock movements and the duplicate-SKU check on the Products form.
 
 **How to use it in the app:** add a product on the **Point of sale** screen, or type an existing SKU into the **Products** form. The system finds the record by exact SKU with binary search; on the form, a SKU that already exists shows "SKU already exists."
 
@@ -220,7 +252,12 @@ public static <T> List<T> insertionSort(List<T> source, Comparator<? super T> or
 }
 ```
 
-**Explanation:** the left part of the list is always sorted; each new element is shifted into its correct place within it. Stable, and fast on nearly sorted data.
+**How it was implemented:**
+1. **Copy first.** `new ArrayList<>(source)`, so the caller's list is never changed.
+2. **Grow a sorted prefix.** The outer loop starts at index 1, because index 0 on its own is already sorted, and takes the element at `i` as `value`.
+3. **Slide larger elements right.** The inner loop walks left from `i - 1`. While the neighbour should come after `value` (the caller's `Comparator` decides), it is copied one slot to the right.
+4. **Drop the value into the gap.** When the loop stops, `value` is placed at `j + 1`. After the last pass the whole list is sorted.
+5. **Where it is used.** Products A–Z (`sortProductsByName`), sales newest-first (`sortSalesByDate`), products by SKU before every binary search, and activities by time in `restoreActivities`. It is stable and fast on nearly sorted data.
 
 **Selection sort** — repeatedly find the smallest remaining element and swap it into place:
 
@@ -240,7 +277,12 @@ public static <T> List<T> selectionSort(List<T> source, Comparator<? super T> or
 }
 ```
 
-**Explanation:** for each position the inner loop scans the rest of the list for the "first" element under the supplied `Comparator`, then swaps it into that position. Only n−1 swaps, but always O(n²) comparisons.
+**How it was implemented:**
+1. **Copy first.** Same as insertion sort: sort a copy.
+2. **Fix one position per pass.** The outer loop visits each slot `i` from the left; slots before `i` are already final.
+3. **Find the best remaining element.** The inner loop scans `i + 1` to the end and remembers the index of the element that comes first under the `Comparator`.
+4. **Swap it into place.** A three-step swap (save slot `i`, copy the best element into it, put the old occupant where the best one was). That is at most one swap per position, n−1 in total, but always O(n²) comparisons.
+5. **Where it is used.** Products by stock low to high (`sortProductsByQuantity`, comparing `qtyOnHand`) and sales by highest total (`sortSalesByTotal`).
 
 | Algorithm | Method | Used for | Triggered from |
 |---|---|---|---|
@@ -308,7 +350,12 @@ if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; //
 
 **4. Fatal error (pop-up dialog)** — `PosApp.showFatal` shows an `Alert` of type `ERROR` for an unrecoverable startup problem (for example the data files cannot be loaded), then closes the app.
 
-**Explanation:** success is a non-blocking notification, errors appear right where the user is working, confirmations block until the user decides, and fatal errors stop the app. Business rules live in `PosService`, which only throws the message text; the screens decide how to display it.
+**How it was implemented:**
+1. **One shared success channel.** `PosApp` owns a status label in the top bar and exposes `showNotice(String)`. It passes `this::showNotice` into every screen as a `Consumer<String> notice`, so screens never touch the label themselves. A screen calls `notice.accept("...")` only after the service call succeeded, which is why success text always means the data was saved.
+2. **Errors stay with the form.** `PosService` validates input and throws `IllegalArgumentException` with the exact sentence to show (or `IOException` if saving fails). The screen wraps the call in `try/catch` and puts `e.getMessage()` in the error label beside the form, so the service decides what is wrong and the screen only decides where to show it.
+3. **Confirm before destroying.** Delete product, Reset data to default, Restore default stock and Exit with an unfinished cart each build an `Alert` of type `CONFIRMATION` with Cancel and OK. The action runs only when `showAndWait()` returns OK; any other answer returns early and nothing changes.
+4. **Stop on fatal errors.** `PosApp.start` loads the CSV data inside a `try/catch`. If that throws `IOException`, `showFatal` shows an `ERROR` alert and closes the window, because the app cannot work without its data.
+5. **Result.** Success is a non-blocking notice, errors appear where the user is working, confirmations block until the user decides, and fatal errors stop the app.
 
 ### Restore default stock
 - **Button:** Stock ▸ "Default stock" card ▸ **Restore default stock** (asks for confirmation).
