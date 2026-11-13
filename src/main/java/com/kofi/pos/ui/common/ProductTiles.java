@@ -27,6 +27,7 @@ import static com.kofi.pos.ui.common.UiSupport.peso; // Money text.
  */
 public final class ProductTiles {
     private static final double TILE_WIDTH = 148; // Fixed width so tiles line up in rows.
+    private static final double TILE_HEIGHT = 226; // Icon + two-line name + price + stock note + padding.
     private static final double ICON_SIZE = 124;  // Picture inside a tile.
 
     private ProductTiles() { } // Utility class.
@@ -56,8 +57,9 @@ public final class ProductTiles {
         Label name = new Label(first.name());
         name.getStyleClass().add("tile-name");
         name.setWrapText(true);
-        name.setMinHeight(34);                                                    // Room for two lines so prices align.
-        name.setMaxWidth(ICON_SIZE);
+        name.setPrefSize(ICON_SIZE, 34);                                          // Room for two lines so prices align.
+        name.setMinHeight(34);
+        name.setMaxSize(ICON_SIZE, 34);
         name.setAlignment(Pos.TOP_CENTER);
         name.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
@@ -80,7 +82,10 @@ public final class ProductTiles {
         Button tile = new Button();
         tile.setGraphic(content);
         tile.getStyleClass().add("product-tile");
-        tile.setPrefWidth(TILE_WIDTH);
+        tile.setPrefSize(TILE_WIDTH, TILE_HEIGHT);                                // Every tile is the same size.
+        tile.setMinSize(TILE_WIDTH, TILE_HEIGHT);
+        tile.setMaxSize(TILE_WIDTH, TILE_HEIGHT);
+        tile.setContentDisplay(javafx.scene.control.ContentDisplay.GRAPHIC_ONLY);
         tile.setDisable(allOut);
         tile.setAccessibleText(first.name() + ", " + (single ? "" : "from ") + peso(cheapest.sellingPrice()) + (stockText.isEmpty() ? "" : ", " + stockText));
         tile.setOnAction(event -> {

@@ -4,7 +4,7 @@ import com.kofi.pos.model.CartLine;                  // Cart line model.
 import com.kofi.pos.model.Product;                   // Product model.
 import com.kofi.pos.model.Sale;                      // Completed sale.
 import com.kofi.pos.service.PosService;              // Business operations.
-import com.kofi.pos.ui.common.ProductTables;         // Shared product table.
+import com.kofi.pos.ui.common.ProductTiles;          // Product picture grid.
 import javafx.animation.PauseTransition;              // Timer used to debounce typing.
 import javafx.beans.property.ReadOnlyIntegerWrapper;  // Number cell value.
 import javafx.beans.property.ReadOnlyStringWrapper;   // Text cell value.
@@ -13,10 +13,14 @@ import javafx.geometry.Insets;                        // Padding.
 import javafx.scene.Node;                             // Base visual type.
 import javafx.scene.control.Button;                   // Button.
 import javafx.scene.control.Label;                    // Text.
+import javafx.scene.control.ScrollPane;               // Scrolling tile area.
 import javafx.scene.control.TableCell;                // Custom table cell.
 import javafx.scene.control.TableColumn;              // Column.
 import javafx.scene.control.TableView;                // Table.
 import javafx.scene.control.TextField;                // Input.
+import javafx.scene.control.ToggleButton;             // Category chip.
+import javafx.scene.control.ToggleGroup;              // One chip selected at a time.
+import javafx.scene.layout.FlowPane;                  // Tile grid type.
 import javafx.scene.layout.ColumnConstraints;         // Grid column sizing.
 import javafx.scene.layout.GridPane;                  // Grid layout.
 import javafx.scene.layout.HBox;                      // Horizontal layout.
@@ -25,6 +29,7 @@ import javafx.scene.layout.VBox;                      // Vertical layout.
 import javafx.util.Duration;                          // Time span.
 import java.io.IOException;                           // Storage failure.
 import java.math.BigDecimal;                          // Money.
+import java.util.ArrayList;                           // Lists.
 import java.util.List;                                // Lists.
 import java.util.function.Consumer;                   // Callback.
 import static com.kofi.pos.ui.common.UiSupport.*;    // Shared helpers.
@@ -57,12 +62,9 @@ public final class PointOfSaleView {
 
     /** Creates the screen's visual tree. */
     public Node build() {
-        VBox root = page("Point of sale", "Search by product name or SKU, then review the cart before taking payment.");
+        VBox root = page("Point of sale", "Tap a product to add it, review the cart, then take payment. Search by name or SKU to narrow the menu.");
 
-        // ============ LEFT SIDE: product search + results ============
-        TableView<Product> results = ProductTables.create(false);
-        results.setItems(FXCollections.observableArrayList(service.searchProducts(""))); // Initially list all active products.
-        results.setPrefHeight(505);
+        // ============ LEFT SIDE: search, category chips and the product tiles ============
         TextField search = new TextField();
         search.setPromptText("Search by name or SKU");
         search.setTextFormatter(limitFormatter(60));
@@ -72,22 +74,31 @@ public final class PointOfSaleView {
         clear.getStyleClass().add("clear-button");
         HBox searchRow = new HBox(8, search, clear);
         HBox.setHgrow(search, Priority.ALWAYS);
-        PauseTransition debounce = new PauseTransition(Duration.millis(250)); // Wait 250ms after the last keystroke.
-        search.textProperty().addListener((obs, old, value) -> {
-            debounce.stop();                                                   // Cancel the previous pending search.
-            debounce.setOnFinished(event -> results.setItems(FXCollections.observableArrayList(service.searchProducts(value)))); // Linear search.
-            debounce.playFromStart();                                          // Restart the countdown.
-        });
-        clear.setOnAction(event -> { search.clear(); search.requestFocus(); });
-        Button add = new Button("Add selected product");
-        add.getStyleClass().add("secondary-button");
         Label searchError = new Label();
         searchError.getStyleClass().add("field-error");
-        Runnable addProduct = () -> { // Adds the selected row (or the first match) to the cart.
-            List<Product> matches = service.searchProducts(search.getText());
-            Product product = results.getSelectionModel().getSelectedItem();
-            if (product == null && !matches.isEmpty()) product = matches.get(0); // Fallback to the first result.
-            if (product == null) { searchError.setText("No matching active product."); return; }
+
+        ToggleGroup categories = new ToggleGroup(); // One chip is always selected: All, Coffee, Food ...
+        HBox chips = new HBox(8);
+        ArrayList<String> names = new ArrayList<>();
+        names.add(null); // null stands for "All".
+        for (Product product : service.searchProducts("")) if (!names.contains(product.category())) names.add(product.category());
+        for (String category : names) {
+            ToggleButton chip = new ToggleButton(category == null ? "All" : category);
+            chip.setUserData(category);
+            chip.setToggleGroup(categories);
+            chip.getStyleClass().add("chip");
+            chips.getChildren().add(chip);
+        }
+        categories.selectToggle(categories.getToggles().get(0));
+        categories.selectedToggleProperty().addListener((obs, old, now) -> { if (now == null) old.setSelected(true); }); // Cannot untick.
+
+        ScrollPane tileHost = new ScrollPane(); // The tiles scroll when there are many products.
+        tileHost.setFitToWidth(true);
+        tileHost.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        tileHost.getStyleClass().add("content-scroll");
+        tileHost.setPrefHeight(505);
+
+        Consumer<Product> addProduct = product -> { // Called when a tile or size button is chosen.
             try {
                 service.addToCart(product.sku());
                 searchError.setText("");
@@ -98,11 +109,37 @@ public final class PointOfSaleView {
                 searchError.setText(e.getMessage());
             }
         };
-        add.setOnAction(event -> addProduct.run());
-        search.setOnAction(event -> { addProduct.run(); event.consume(); }); // Enter in the search box adds too.
-        results.setOnMouseClicked(event -> { if (event.getClickCount() == 2) addProduct.run(); }); // Double-click adds.
-        VBox catalog = new VBox(10, searchRow, searchError, results, add);
-        VBox.setVgrow(results, Priority.ALWAYS);
+        Runnable showTiles = () -> { // Linear search by text, then keep only the chosen category.
+            String category = (String) categories.getSelectedToggle().getUserData();
+            ArrayList<Product> shown = new ArrayList<>();
+            for (Product product : service.searchProducts(search.getText()))
+                if (category == null || product.category().equalsIgnoreCase(category)) shown.add(product);
+            if (shown.isEmpty()) {
+                Label none = new Label(search.getText().isBlank() ? "No products in this category." : "No products match \"" + search.getText() + "\". Clear the search to see everything.");
+                none.getStyleClass().add("muted-text");
+                none.setWrapText(true);
+                none.setPadding(new Insets(12));
+                tileHost.setContent(none);
+            } else tileHost.setContent(ProductTiles.grid(shown, addProduct));
+        };
+        PauseTransition debounce = new PauseTransition(Duration.millis(250)); // Wait 250ms after the last keystroke.
+        search.textProperty().addListener((obs, old, value) -> {
+            debounce.stop();                                                   // Cancel the previous pending search.
+            debounce.setOnFinished(event -> showTiles.run());
+            debounce.playFromStart();                                          // Restart the countdown.
+        });
+        categories.selectedToggleProperty().addListener((obs, old, now) -> showTiles.run());
+        clear.setOnAction(event -> { search.clear(); search.requestFocus(); });
+        search.setOnAction(event -> { // Enter chooses the first tile, like clicking it.
+            debounce.stop();
+            showTiles.run();
+            if (tileHost.getContent() instanceof FlowPane grid && !grid.getChildren().isEmpty()
+                    && grid.getChildren().get(0) instanceof Button first && !first.isDisabled()) first.fire();
+            event.consume();
+        });
+        showTiles.run();
+        VBox catalog = new VBox(10, searchRow, chips, searchError, tileHost);
+        VBox.setVgrow(tileHost, Priority.ALWAYS);
 
         // ============ RIGHT SIDE: the cart (a LinkedList inside PosService) ============
         Label cartTitle = new Label("Current sale");
