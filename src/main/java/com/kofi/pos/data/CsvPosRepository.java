@@ -8,6 +8,7 @@ import com.kofi.pos.data.csv.SaleLineCsv;       // sale_lines.csv layout.
 import com.kofi.pos.data.csv.SettingsCsv;       // settings.csv layout.
 import com.kofi.pos.data.csv.StockMovementCsv;  // stock_movements.csv layout.
 import com.kofi.pos.data.csv.UserCsv;           // users.csv layout.
+import com.kofi.pos.model.Product;           // Product record.
 import com.kofi.pos.model.Settings;             // Store settings record.
 
 import java.io.IOException;  // Storage failure.
@@ -42,6 +43,15 @@ public final class CsvPosRepository implements PosRepository {
     public StoreData resetToDefaults() throws IOException {
         csv.restoreDefaults();
         return readSnapshot();
+    }
+
+    /** The products in the packaged default file, converted with the same table layout the live file uses. */
+    @Override
+    public List<Product> defaultProducts() throws IOException {
+        List<List<String>> rows = csv.readDefault(ProductCsv.TABLE.file());
+        ArrayList<Product> products = new ArrayList<>();
+        for (int index = 1; index < rows.size(); index++) products.add(ProductCsv.TABLE.fromRow(rows.get(index))); // Skip the header.
+        return products;
     }
 
     /** True when every file's first line equals the column names this version expects. */

@@ -48,9 +48,21 @@ public final class CsvStore {
         } // try-with-resources closes the stream automatically.
     }
 
-    /** Reads rows while supporting quoted commas, escaped quotes, and embedded line breaks. */
+    /** Reads a live data file (in the data folder) into rows of fields. */
     public List<List<String>> read(String file) throws IOException {
-        String text = Files.readString(directory.resolve(file), StandardCharsets.UTF_8); // Whole file as one string.
+        return parse(Files.readString(directory.resolve(file), StandardCharsets.UTF_8), file); // Whole file as one string.
+    }
+
+    /** Reads the packaged default copy of a file (the seed) without touching the live data. */
+    public List<List<String>> readDefault(String file) throws IOException {
+        try (InputStream seed = CsvStore.class.getResourceAsStream("/seed/" + file)) {
+            if (seed == null) throw new IOException("Missing starter file: " + file); // Packaging mistake guard.
+            return parse(new String(seed.readAllBytes(), StandardCharsets.UTF_8), file);
+        }
+    }
+
+    /** Splits CSV text into rows while supporting quoted commas, escaped quotes, and embedded line breaks. */
+    private List<List<String>> parse(String text, String file) throws IOException {
         List<List<String>> rows = new ArrayList<>(); // Finished rows.
         List<String> row = new ArrayList<>();        // The row being built.
         StringBuilder field = new StringBuilder();   // The field being built.

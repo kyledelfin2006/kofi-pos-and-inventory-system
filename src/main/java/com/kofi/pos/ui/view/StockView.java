@@ -81,31 +81,31 @@ public final class StockView {
         return root;
     }
 
-    /** The danger-zone card that sets every product's stock to 0 after a confirmation. */
+    /** The card that returns every product's stock to its default level after a confirmation. */
     private VBox resetPanel() {
-        Label description = new Label("Sets the stock of every product to 0 and logs it in the movement history. Products, prices and sales are kept.");
+        Label description = new Label("Puts every product's stock back to its default level, for example after a day of selling. Every change is logged in the movement history. Products, prices and sales are kept.");
         description.setWrapText(true);
         description.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE); // Let the text wrap instead of cutting off with "...".
         description.getStyleClass().add("muted-text");
         Label error = errorLabel();
-        Button reset = new Button("Reset inventory to 0");
-        reset.getStyleClass().add("danger-button");
+        Button reset = new Button("Restore default stock");
+        reset.getStyleClass().add("secondary-button");
         reset.setMaxWidth(Double.MAX_VALUE);
         reset.setOnAction(event -> {
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                    "Every product's stock will be set to 0 and any open cart will be cleared. Continue?",
+                    "Every product's stock will go back to its default level. Continue?",
                     ButtonType.CANCEL, ButtonType.OK);
             confirm.initOwner(reset.getScene().getWindow());        // Centre over the main window.
-            confirm.setTitle("Reset inventory");
-            confirm.setHeaderText("Set all inventory to 0?");
+            confirm.setTitle("Restore default stock");
+            confirm.setHeaderText("Restore stock to the defaults?");
             if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
             try {
-                service.resetInventoryToZero();
-                notice.accept("Inventory reset to 0");
+                service.restoreDefaultStock();
+                notice.accept("Default stock restored");
                 navigate.accept("Stock");                            // Reload the screen with the new history.
-            } catch (IOException e) { error.setText("Could not reset inventory: " + e.getMessage()); }
+            } catch (IOException e) { error.setText("Could not restore stock: " + e.getMessage()); }
         });
-        VBox panel = panel("Reset inventory", description, error, reset);
+        VBox panel = panel("Default stock", description, error, reset);
         panel.setPrefWidth(350);
         return panel;
     }

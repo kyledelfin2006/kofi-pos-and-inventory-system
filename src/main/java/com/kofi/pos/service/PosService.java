@@ -24,6 +24,7 @@ import java.time.LocalDateTime;              // Date with time.
 import java.time.format.DateTimeFormatter;   // Formats the receipt-number date part.
 import java.util.ArrayDeque;                 // Array-backed queue implementation.
 import java.util.ArrayList;                  // Resizable array list.
+import java.util.HashMap;                      // SKU -> default stock lookup.
 import java.util.HashSet;                    // Fast "have I seen this?" set.
 import java.util.LinkedList;                 // Doubly linked list.
 import java.util.List;                       // Generic list interface.
@@ -421,21 +422,26 @@ public final class PosService {
     }
 
     /**
-     * Sets every product's stock to 0 (sales and products are kept). Each product that had stock gets an "Adjust"
-     * movement for the removed quantity, so the movement history still adds up and the reset is auditable.
+     * Puts every product's stock back to its starting level from the default data (the seed file), so stock that
+     * has been sold or adjusted returns to the default. Sales, prices and history are kept: each change is logged
+     * as a movement ("Stock In" when stock goes up, "Adjust" when it goes down). Products that are not in the
+     * default data (ones the user created) have no default level and are left alone.
      */
-    public void resetInventoryToZero() throws IOException {
+    public void restoreDefaultStock() throws IOException {
+        HashMap<String, Integer> defaults = new HashMap<>();              // SKU -> default stock.
+        for (Product product : repository.defaultProducts()) defaults.put(product.sku().toUpperCase(Locale.ROOT), product.qtyOnHand());
         LocalDateTime now = LocalDateTime.now();
-        for (int i = 0; i < products.size(); i++) {                  // Visit every product by position.
+        for (int i = 0; i < products.size(); i++) {                       // Visit every product by position.
             Product product = products.get(i);
-            if (product.qtyOnHand() == 0) continue;                  // Already empty: nothing to log.
-            movements.add(new StockMovement(nextMovementId(), now, product.sku(), product.displayName(), "Adjust",
-                    product.qtyOnHand(), "Inventory reset to 0", ""));
-            products.set(i, product.withQuantity(0));                // Replace the record with a zero-stock copy.
+            Integer target = defaults.get(product.sku().toUpperCase(Locale.ROOT));
+            if (target == null || !product.active() || product.qtyOnHand() == target) continue; // No default, hidden, or already there.
+            int difference = target - product.qtyOnHand();                // Positive = stock must go up.
+            movements.add(new StockMovement(nextMovementId(), now, product.sku(), product.displayName(),
+                    difference > 0 ? "Stock In" : "Adjust", Math.abs(difference), "Default stock restored", ""));
+            products.set(i, product.withQuantity(target));                // Replace the record with the restored copy.
         }
-        cart.clear();                                                // Nothing can be sold from empty shelves.
-        activities.push(new Activity(now, "Inventory reset", "All stock set to 0")); // STACK push.
-        refreshRestockQueue();                                       // Every active product is now at or below its reorder level.
+        activities.push(new Activity(now, "Default stock restored", "Stock returned to the default levels")); // STACK push.
+        refreshRestockQueue();                                            // Levels changed, so alerts may have too.
         saveAll();
     }
 

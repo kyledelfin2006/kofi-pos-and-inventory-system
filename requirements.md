@@ -310,10 +310,12 @@ if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; //
 
 **Explanation:** success is a non-blocking notification, errors appear right where the user is working, confirmations block until the user decides, and fatal errors stop the app. Business rules live in `PosService`, which only throws the message text; the screens decide how to display it.
 
-### Reset inventory to 0
-- **Button:** Stock ▸ "Reset inventory" card ▸ **Reset inventory to 0** (asks for confirmation).
-- **Flow:** [`StockView.resetPanel`](src/main/java/com/kofi/pos/ui/view/StockView.java) → `PosService.resetInventoryToZero()`.
-- **Result:** every product's stock becomes 0. Products, prices, sales and users are kept. Each product that had stock gets an *Adjust* movement for the removed quantity (reason "Inventory reset to 0"), so the movement history still adds up. An "Inventory reset" entry is pushed on the activity stack, the open cart is cleared, and because every product is now at or below its reorder level the restock queue refills with all of them. This differs from **Reset data to default** on the Settings screen, which restores the original sample data (stock 50 each) and erases sales and history.
+### Restore default stock
+- **Button:** Stock ▸ "Default stock" card ▸ **Restore default stock** (asks for confirmation).
+- **Flow:** [`StockView.resetPanel`](src/main/java/com/kofi/pos/ui/view/StockView.java) → `PosService.restoreDefaultStock()` → `PosRepository.defaultProducts()` → `CsvStore.readDefault()`.
+- **What "default" means:** the `qty_on_hand` column of [`src/main/resources/seed/products.csv`](src/main/resources/seed/products.csv) (50 for each menu item). Change the seed file to change the default level.
+- **Result:** if you have sold or adjusted stock (for example down to 10), pressing the button puts every product back to its default (50). Each change is logged as a movement: *Stock In* when stock goes up, *Adjust* when it goes down, reason "Default stock restored". Products, prices, sales and users are kept, and a "Default stock restored" entry is pushed on the activity stack. Products you created yourself have no default level and are left alone. The restock queue is refreshed, so restored products leave it.
+- **Different from Reset data to default** on the Settings screen, which restores the whole sample data set and erases sales and history.
 
 ### Launcher
 The app is still started through [`Launcher`](src/main/java/com/kofi/pos/Launcher.java): `pom.xml` sets it as the `javafx:run` main class, so `run.cmd`, `mvn javafx:run` and IDE runs all go through it.
