@@ -65,7 +65,7 @@ restockQueue.peek();                                                    // nextR
 **How:** a product whose stock falls to or below its reorder level joins the **back** of the queue; products already waiting keep their position (first in, first out); products that have been restocked leave the queue. The dashboard's **Receive next restock** button takes the **front** of the queue (`peek`) and opens the Stock screen on that product.
 
 **How to use it in the app:**
-1. With the default data every product starts at stock 0 (reorder level 10), so all of them are already waiting in the queue. To see it change, record a *Stock In* for two products and lift them above their reorder level (for example 50), then take one back to 10 or below with a *Stock Out*.
+1. Open **Stock** and record a *Stock Out* that takes a product to its reorder level or below. With the default data (stock 50, reorder level 10) take out 40 or more.
 2. Do the same for a second product. Open **Overview**: **Restock queue** lists them in the order they ran low, and the heading shows the count.
 3. Press **Receive next restock**. The Stock screen opens with the product at the **front** of the queue preselected. Record a *Stock In* that lifts it above its reorder level.
 4. Return to Overview: that product has left the queue and the next one is at the front.
@@ -259,7 +259,7 @@ The sort choice is visible in the drop-down labels so the algorithm in use can b
 - **Button:** Settings ▸ "Reset data" card ▸ **Reset data to default** (asks for confirmation).
 - **Flow:** [`SettingsView.resetPanel`](src/main/java/com/kofi/pos/ui/view/SettingsView.java) → `PosService.resetToDefaults()` → `PosRepository.resetToDefaults()` → `CsvStore.restoreDefaults()`.
 - **The default CSV:** the six files in [`src/main/resources/seed/`](src/main/resources/seed/) are the default dataset. Reset overwrites the live files in `data/` with them and reloads memory (including the cart, activity stack and restock queue). Edit the seed files to change what "default" means.
-- **Result:** the 20 Kofi menu items (placeholder prices, stock 0 each), no sales or movements, store settings back to "Kofi", and the `admin / admin123` login.
+- **Result:** the 20 Kofi menu items (placeholder prices, stock 50 each), no sales or movements, store settings back to "Kofi", and the `admin / admin123` login.
 
 ### Messages — success, error and confirmation notifications
 The system always tells the user what happened. There are four kinds of message:
@@ -313,7 +313,7 @@ if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; //
 ### Reset inventory to 0
 - **Button:** Stock ▸ "Reset inventory" card ▸ **Reset inventory to 0** (asks for confirmation).
 - **Flow:** [`StockView.resetPanel`](src/main/java/com/kofi/pos/ui/view/StockView.java) → `PosService.resetInventoryToZero()`.
-- **Result:** every product's stock becomes 0. Products, prices, sales and users are kept. Each product that had stock gets an *Adjust* movement for the removed quantity (reason "Inventory reset to 0"), so the movement history still adds up. An "Inventory reset" entry is pushed on the activity stack, the open cart is cleared, and because every product is now at or below its reorder level the restock queue refills with all of them. This differs from **Reset data to default** on the Settings screen, which restores the default data set (stock 0 each, same as this button) and erases sales and history, and also resets products, prices and store settings.
+- **Result:** every product's stock becomes 0. Products, prices, sales and users are kept. Each product that had stock gets an *Adjust* movement for the removed quantity (reason "Inventory reset to 0"), so the movement history still adds up. An "Inventory reset" entry is pushed on the activity stack, the open cart is cleared, and because every product is now at or below its reorder level the restock queue refills with all of them. This differs from **Reset data to default** on the Settings screen, which restores the original sample data (stock 50 each) and erases sales and history.
 
 ### Launcher
 The app is still started through [`Launcher`](src/main/java/com/kofi/pos/Launcher.java): `pom.xml` sets it as the `javafx:run` main class, so `run.cmd`, `mvn javafx:run` and IDE runs all go through it.
