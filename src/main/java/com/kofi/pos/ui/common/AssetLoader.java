@@ -17,7 +17,8 @@ import java.util.Map;              // Map interface.
  * <p>Where to put real pictures:
  * <ul>
  *   <li>Product photos: {@code assets/products/<file>} next to the app (or in resources under /assets/products),
- *       then put the file name in the product's {@code image} column.</li>
+ *       then put the file name in the product's {@code image} column. With the column blank, the file named after
+ *       the product is used ({@code spanish-latte.png} for "Spanish Latte"), so every size shares one icon.</li>
  *   <li>Branding: {@code src/main/resources/assets/branding/}.</li>
  * </ul>
  */
@@ -55,12 +56,19 @@ public final class AssetLoader {
                 image = resource(PRODUCTS + product.image(), size);       // 2) packaged resource.
             }
         }
+        if (image == null) image = resource(PRODUCTS + slug(product.name()) + ".png", size); // 2b) icon named after the product.
         if (image == null) { // 3) placeholder by category.
             String name = product.category().equalsIgnoreCase("Food") ? "placeholder-food.png" : "placeholder-coffee.png";
             image = resource(PRODUCTS + name, size);
         }
         if (image != null) CACHE.put(key, image);
         return image;
+    }
+
+    /** File-name form of a product name: "Café Latte" becomes "cafe-latte". */
+    static String slug(String name) {
+        String plain = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}", ""); // Drop accents.
+        return plain.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
     }
 
     /** A ready-made ImageView, or an empty one when the picture is unavailable. */
