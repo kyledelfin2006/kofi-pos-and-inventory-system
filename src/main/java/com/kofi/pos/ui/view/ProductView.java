@@ -2,6 +2,7 @@ package com.kofi.pos.ui.view; // One class per screen.
 
 import com.kofi.pos.model.Product;                   // Product model.
 import com.kofi.pos.service.PosService;              // Business operations.
+import com.kofi.pos.ui.common.AssetLoader;           // Icon lookup.
 import com.kofi.pos.ui.common.ProductTables;         // Shared product table.
 import javafx.collections.FXCollections;              // Observable lists.
 import javafx.geometry.Insets;                        // Padding.
@@ -14,6 +15,7 @@ import javafx.scene.control.ComboBox;                 // Drop-down.
 import javafx.scene.control.Label;                    // Text.
 import javafx.scene.control.TableView;                // Table.
 import javafx.scene.control.TextField;                // Input.
+import javafx.scene.image.ImageView;                  // Icon preview.
 import javafx.scene.input.KeyCode;                    // Keys.
 import javafx.scene.layout.HBox;                      // Horizontal layout.
 import javafx.scene.layout.Priority;                  // Grow priority.
@@ -129,7 +131,18 @@ public final class ProductView {
         delete.setMaxWidth(Double.MAX_VALUE);
         delete.setDisable(true);
 
-        VBox box = new VBox(10, title, field("SKU *", sku), skuError, field("Product name *", name), nameError,
+        ImageView preview = AssetLoader.icon(null, 72); // Shows the icon cashiers will see for this name.
+        Label previewNote = new Label("Cashiers see this icon at checkout. It follows the product name.");
+        previewNote.setWrapText(true);
+        previewNote.getStyleClass().add("muted-small");
+        HBox previewRow = new HBox(12, preview, previewNote);
+        previewRow.setAlignment(Pos.CENTER_LEFT);
+        Runnable refreshPreview = () -> preview.setImage(AssetLoader.product("", name.getText(), category.getEditor().getText(), 144));
+        name.textProperty().addListener((obs, old, value) -> refreshPreview.run());
+        category.getEditor().textProperty().addListener((obs, old, value) -> refreshPreview.run());
+        refreshPreview.run();
+
+        VBox box = new VBox(10, title, previewRow, field("SKU *", sku), skuError, field("Product name *", name), nameError,
                 field("Category", category), field("Variant", variant), field("Size (oz)", size), field("Unit *", unit), field("Cost price *", cost), costError,
                 field("Selling price *", price), priceError, warning, field("Reorder level *", reorder), reorderError,
                 field("Qty on hand", qty), message, save, clear, delete);

@@ -22,16 +22,15 @@ public final class ProductTables {
         TableColumn<Product, Product> picture = new TableColumn<>(""); // Thumbnail column.
         picture.setCellValueFactory(cell -> new javafx.beans.property.ReadOnlyObjectWrapper<>(cell.getValue()));
         picture.setCellFactory(column -> new TableCell<>() {
-            private final ImageView view = new ImageView(); // One reusable view per cell.
-            { view.setFitWidth(30); view.setFitHeight(30); view.setPreserveRatio(true); }
+            private final ImageView view = AssetLoader.icon(null, 32); // One reusable rounded view per cell.
             @Override protected void updateItem(Product product, boolean empty) {
                 super.updateItem(product, empty);
                 if (empty || product == null) { setGraphic(null); return; }
-                view.setImage(AssetLoader.product(product, 30)); // Own picture or category placeholder.
+                view.setImage(AssetLoader.product(product, 64)); // Own picture or category placeholder.
                 setGraphic(view);
             }
         });
-        picture.setMaxWidth(46); picture.setMinWidth(46);
+        picture.setMaxWidth(52); picture.setMinWidth(52);
         TableColumn<Product, String> sku = new TableColumn<>("SKU");
         sku.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().sku()));
         TableColumn<Product, String> name = new TableColumn<>("Product");

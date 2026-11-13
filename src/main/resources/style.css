@@ -113,7 +113,7 @@
     -fx-border-radius: 7px;
     -fx-border-width: 1px;
     -fx-table-cell-border-color: #f1efed;
-    -fx-fixed-cell-size: 39px;
+    -fx-fixed-cell-size: 44px;
 }
 .table-view .column-header-background { -fx-background-color: #f4f2f0; -fx-background-radius: 7px 7px 0 0; }
 .table-view .column-header { -fx-background-color: transparent; -fx-size: 38px; }
