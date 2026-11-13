@@ -1,8 +1,9 @@
 <div align="center">
   <img src="assets/Kofi_Logo_Text.png" alt="Kofi logo" width="360">
   <h1>Kofi POS &amp; Inventory</h1>
-  <p><strong>Point of sale and inventory for a local coffee shop, ready to run offline.</strong></p>
-  <p> An Offline Point-of-Sale and Inventory Management System for Local Cafe Owners in Kalibo </p>
+  
+  <p><strong> An Offline Point-of-Sale and Inventory Management System for Local Cafe Owners in Kalibo. </strong></p>
+  <p> Note: Kofi template — each coffee shop gets its own customized version.  </p>
 </div>
 
 ## Take a look
