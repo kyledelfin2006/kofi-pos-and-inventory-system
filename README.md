@@ -7,7 +7,7 @@
 
 ## Take a look
 
-![Kofi point-of-sale screen showing the product menu and current sale panel](assets/POS_Screenshot.png)
+![Kofi POS, products, and overview screens smoothly fading in order](assets/POS_Screenshots.gif)
 
 ## What is Kofi?
 
