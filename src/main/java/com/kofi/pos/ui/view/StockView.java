@@ -1,5 +1,7 @@
 package com.kofi.pos.ui.view; // One class per screen.
 
+import com.kofi.pos.ui.common.AssetLoader;           // Icon lookup.
+import com.kofi.pos.ui.common.ProductTables;         // Icon cell.
 import com.kofi.pos.model.Product;                   // Product model.
 import com.kofi.pos.model.StockMovement;             // Movement model.
 import com.kofi.pos.service.PosService;              // Business operations.
@@ -52,6 +54,7 @@ public final class StockView {
         time.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().occurredAt().format(DATE_TIME)));
         TableColumn<StockMovement, String> product = new TableColumn<>("Product");
         product.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().productName()));
+        product.setCellFactory(column -> ProductTables.iconCell(move -> service.findProduct(move.sku()))); // Icon beside each movement.
         TableColumn<StockMovement, String> type = new TableColumn<>("Type");
         type.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().type()));
         TableColumn<StockMovement, Number> quantity = new TableColumn<>("Qty");
@@ -95,6 +98,18 @@ public final class StockView {
                 return null;
             }
         });
+        javafx.util.Callback<javafx.scene.control.ListView<Product>, javafx.scene.control.ListCell<Product>> withIcon = list -> new javafx.scene.control.ListCell<>() {
+            private final javafx.scene.image.ImageView view = AssetLoader.icon(null, 28); // Icon in the drop-down rows and the closed box.
+            @Override protected void updateItem(Product item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); setGraphic(null); return; }
+                setText(item.sku() + " · " + item.displayName());
+                view.setImage(AssetLoader.product(item, 56));
+                setGraphic(view);
+            }
+        };
+        product.setCellFactory(withIcon);
+        product.setButtonCell(withIcon.call(null));
         ComboBox<String> type = new ComboBox<>(FXCollections.observableArrayList("Stock In", "Stock Out", "Adjust"));
         type.getSelectionModel().selectFirst();
         TextField quantity = new TextField();

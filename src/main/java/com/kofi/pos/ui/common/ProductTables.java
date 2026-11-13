@@ -10,6 +10,7 @@ import javafx.scene.control.TableColumn;              // One column.
 import javafx.scene.control.TableView;                // The table widget.
 
 import java.util.List; // Used to add several columns at once.
+import java.util.function.Function; // Finds the product behind a table row.
 
 /** Builds the shared product table used by checkout and product maintenance. */
 public final class ProductTables {
@@ -53,5 +54,22 @@ public final class ProductTables {
         table.setPlaceholder(new Label("No products match this search."));                  // Shown when empty.
         table.setSortPolicy(ignored -> false); // Disable JavaFX's built-in sorting: our own algorithms decide the order.
         return table;
+    }
+
+    /** A text cell with the row's product icon in front of the text. Rows whose product is gone show text only. */
+    public static <S> TableCell<S, String> iconCell(Function<S, Product> productOf) {
+        return new TableCell<>() {
+            private final ImageView view = AssetLoader.icon(null, 28); // One reusable rounded icon per cell.
+            @Override protected void updateItem(String text, boolean empty) {
+                super.updateItem(text, empty);
+                S row = getTableRow() == null ? null : getTableRow().getItem();
+                Product product = empty || row == null ? null : productOf.apply(row);
+                setText(empty ? null : text);
+                if (product == null) { setGraphic(null); return; }
+                view.setImage(AssetLoader.product(product, 56)); // Rendered at twice the size so it stays sharp on high-DPI screens.
+                setGraphic(view);
+                setGraphicTextGap(10);
+            }
+        };
     }
 }

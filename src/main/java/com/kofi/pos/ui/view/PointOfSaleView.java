@@ -4,6 +4,7 @@ import com.kofi.pos.model.CartLine;                  // Cart line model.
 import com.kofi.pos.model.Product;                   // Product model.
 import com.kofi.pos.model.Sale;                      // Completed sale.
 import com.kofi.pos.service.PosService;              // Business operations.
+import com.kofi.pos.ui.common.ProductTables;         // Icon cell for the cart.
 import com.kofi.pos.ui.common.ProductTiles;          // Product picture grid.
 import javafx.animation.PauseTransition;              // Timer used to debounce typing.
 import javafx.beans.property.ReadOnlyIntegerWrapper;  // Number cell value.
@@ -151,6 +152,7 @@ public final class PointOfSaleView {
         currentCartTable = cartTable;
         TableColumn<CartLine, String> item = new TableColumn<>("Item");
         item.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().product().displayName()));
+        item.setCellFactory(column -> ProductTables.iconCell(CartLine::product)); // Icon beside each cart line.
         TableColumn<CartLine, Integer> quantity = new TableColumn<>("Qty");
         quantity.setCellValueFactory(c -> new ReadOnlyIntegerWrapper(c.getValue().quantity()).asObject());
         quantity.setCellFactory(column -> new TableCell<>() { // Each Qty cell is an editable text box.

@@ -1,6 +1,7 @@
 package com.kofi.pos.ui.view; // One class per screen lives in this package.
 
 import com.kofi.pos.model.Activity;                  // Row type of the activity table.
+import com.kofi.pos.ui.common.ProductTables;           // Icon cell.
 import com.kofi.pos.model.RestockAlert;              // Row type of the restock table.
 import com.kofi.pos.service.PosService;              // Business operations.
 import javafx.beans.property.ReadOnlyIntegerWrapper;  // Number cell value.
@@ -45,6 +46,7 @@ public final class DashboardView {
         TableView<RestockAlert> alerts = new TableView<>();
         TableColumn<RestockAlert, String> alertName = new TableColumn<>("Product");
         alertName.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().productName()));
+        alertName.setCellFactory(column -> ProductTables.iconCell(alert -> service.findProduct(alert.sku()))); // Icon beside each alert.
         TableColumn<RestockAlert, String> alertSku = new TableColumn<>("SKU");
         alertSku.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().sku()));
         TableColumn<RestockAlert, Number> alertQty = new TableColumn<>("On hand");
