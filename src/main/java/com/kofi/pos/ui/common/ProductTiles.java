@@ -110,7 +110,7 @@ public final class ProductTiles {
         head.setAlignment(Pos.CENTER_LEFT);
 
         FlowPane options = new FlowPane(10, 10);
-        options.setPrefWrapLength(300);                                           // Two size buttons per row.
+        options.setPrefWrapLength(280);                                           // Two size buttons per row.
         List<Button> buttons = new ArrayList<>();
         for (Product product : group) {
             Label label = new Label(sizeLabel(product));
@@ -127,7 +127,7 @@ public final class ProductTiles {
             Button button = new Button();
             button.setGraphic(text);
             button.getStyleClass().add("size-button");
-            button.setPrefWidth(142);
+            button.setPrefWidth(134);
             button.setDisable(product.qtyOnHand() == 0);
             button.setAccessibleText(sizeLabel(product) + ", " + peso(product.sellingPrice()));
             button.setOnAction(event -> { dialog.setResult(product); dialog.close(); });
