@@ -49,7 +49,7 @@ The seed in `src/main/resources/seed/products.csv` has 20 items: four coffees (S
 |---|---|
 | `assets/` | Original logo artwork (`Kofi_Logo.png`, `Kofi_Logo_Text.png`). |
 | `src/main/resources/assets/branding/` | Resized logos used by the login screen and sidebar. |
-| `src/main/resources/assets/products/` | `placeholder-coffee.png` and `placeholder-food.png`, shown whenever a product has no picture. |
+| `src/main/resources/assets/products/` | One icon per menu item, named after the product (`spanish-latte.png`, `french-fries.png`; every size of a drink shares one icon), plus `placeholder-coffee.png` and `placeholder-food.png` for products with no icon. The full-size source art is in `assets/`. See [docs/icon-plan.md](docs/icon-plan.md). |
 | `assets/products/` (optional, next to the app) | Drop real product photos here and put the file name in the product's `image` column. |
 
 `AssetLoader` falls back to the placeholders, so a missing picture never breaks a screen.
