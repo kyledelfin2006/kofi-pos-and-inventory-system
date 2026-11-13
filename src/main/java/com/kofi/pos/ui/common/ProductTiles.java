@@ -110,7 +110,7 @@ public final class ProductTiles {
         head.setAlignment(Pos.CENTER_LEFT);
 
         FlowPane options = new FlowPane(10, 10);
-        options.setPrefWrapLength(310);                                           // Two size buttons per row.
+        options.setPrefWrapLength(300);                                           // Two size buttons per row.
         List<Button> buttons = new ArrayList<>();
         for (Product product : group) {
             Label label = new Label(sizeLabel(product));
@@ -120,13 +120,14 @@ public final class ProductTiles {
             Label left = new Label(product.qtyOnHand() == 0 ? "Out of stock"
                     : product.qtyOnHand() <= product.reorderLevel() ? product.qtyOnHand() + " left" : "");
             left.getStyleClass().add(product.qtyOnHand() == 0 ? "stock-out" : "stock-low");
-            left.setMinHeight(16);
+            left.setMinHeight(18);
+            left.setVisible(!left.getText().isEmpty());                          // Keep the height, hide the empty pill.
             VBox text = new VBox(3, label, cost, left);
             text.setAlignment(Pos.CENTER_LEFT);
             Button button = new Button();
             button.setGraphic(text);
             button.getStyleClass().add("size-button");
-            button.setPrefWidth(150);
+            button.setPrefWidth(142);
             button.setDisable(product.qtyOnHand() == 0);
             button.setAccessibleText(sizeLabel(product) + ", " + peso(product.sellingPrice()));
             button.setOnAction(event -> { dialog.setResult(product); dialog.close(); });
@@ -134,7 +135,7 @@ public final class ProductTiles {
             options.getChildren().add(button);
         }
         VBox body = new VBox(16, head, options);
-        body.setPrefWidth(330);
+        body.setPrefWidth(310);
         dialog.getDialogPane().setContent(body);
         Platform.runLater(() -> buttons.stream().filter(b -> !b.isDisabled()).findFirst().ifPresent(Button::requestFocus));
         return dialog.showAndWait();
