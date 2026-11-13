@@ -2,7 +2,7 @@
   <img src="assets/Kofi_Logo_Text.png" alt="Kofi logo" width="360">
   <h1>Kofi POS &amp; Inventory</h1>
   <p><strong>Point of sale and inventory for a local coffee shop, ready to run offline.</strong></p>
-  <p>Built with Java 17 and JavaFX for a small coffee shop — and for a CC 104 project that puts data structures and algorithms to work.</p>
+  <p> An Offline Point-of-Sale and Inventory Management System for Local Cafe Owners in Kalibo </p>
 </div>
 
 ## Take a look
@@ -13,7 +13,10 @@
 
 Kofi is a desktop point-of-sale and inventory app for a single local shop. Cashiers can build a cart, take cash, and create receipts; owners can manage the menu, track stock movements, and review sales from the same application.
 
+Designed to be lightweight and affordable for local cafe owners.
+
 At runtime, the app works without internet. It keeps live records in Java collections and saves them as local CSV files, so there is no SQL database or network service to set up.
+
 
 ## What you can do
 
