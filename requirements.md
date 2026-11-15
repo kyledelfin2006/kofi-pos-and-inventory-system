@@ -10,12 +10,13 @@ Each requirement below has the same parts: **Where** it lives, the **code** itse
 |---|---|---|---|
 | 1 | Stack | Store recent activities or transactions | Done |
 | 2 | Queue | Manage waiting lists or pending requests | Done |
-| 3 | Recursion | At least one recursive operation | Done |
+| 3 | Recursion (recursive sum) | Calculate inventory cost recursively | Done |
 | 4 | ArrayList | Store and manage records | Done |
 | 5 | Linked List | Organize and manage a collection of records | Done |
-| 6 | Linear search | Search for a particular record | Done |
-| 7 | Binary search | Search within sorted records | Done |
-| 8 | Sorting (at least two) | Insertion sort + selection sort | Done |
+| 6 | Linear search | Find matching products and receipts by scanning records | Done |
+| 7 | Binary search | Find products by exact SKU in SKU-sorted records | Done |
+| 8 | Insertion sort | Order products, sales, and recent activities | Done |
+| 9 | Selection sort | Order products by stock and sales by total | Done |
 
 ---
 
