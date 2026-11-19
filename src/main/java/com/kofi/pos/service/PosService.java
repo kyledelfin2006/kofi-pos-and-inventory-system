@@ -3,7 +3,7 @@ package com.kofi.pos.service; // Business layer: all store rules live here, with
 import com.kofi.pos.algorithm.RecursiveAlgorithms; // Hand-written recursion.
 import com.kofi.pos.algorithm.SearchAlgorithms;    // Hand-written linear + binary search.
 import com.kofi.pos.algorithm.SortAlgorithms;      // Hand-written insertion + selection sort.
-import com.kofi.pos.data.PosRepository;            // Storage contract (CSV is hidden behind it).
+import com.kofi.pos.data.PosRepository;            // Storage contract (database details are hidden behind it).
 import com.kofi.pos.data.StoreData;                // Snapshot exchanged with storage.
 import com.kofi.pos.model.Activity;                // Dashboard activity entry.
 import com.kofi.pos.model.CartLine;                // One line in the cart.
@@ -36,7 +36,7 @@ import java.util.Stack;                      // Last-in-first-out collection.
 
 /**
  * In-memory application service for catalogue, checkout, stock, receipts, and reports.
- * CSV details stay behind {@link PosRepository}; the UI receives snapshots and business operations.
+ * Storage details stay behind {@link PosRepository}; the UI receives snapshots and business operations.
  *
  * <p>Data structures used (see requirements.md):
  * ArrayList = records, LinkedList = cart, Stack = recent activity, Queue = restock alerts.
@@ -64,7 +64,7 @@ public final class PosService {
         applySnapshot(repository.load());      // Fill all collections from the stored data.
     }
 
-    /** RESET: restores the packaged default CSV data and reloads every in-memory collection from it. */
+    /** RESET: restores the packaged default data and reloads every in-memory collection from it. */
     public void resetToDefaults() throws IOException {
         applySnapshot(repository.resetToDefaults()); // Storage restores defaults; we replace our state with them.
     }
@@ -434,7 +434,7 @@ public final class PosService {
         for (int i = 0; i < products.size(); i++) {                       // Visit every product by position.
             Product product = products.get(i);
             Integer target = defaults.get(product.sku().toUpperCase(Locale.ROOT));
-            if (target == null || !product.active() || product.qtyOnHand() == target) continue; // No default, hidden, or already there.
+            if (target == null || product.qtyOnHand() == target) continue; // No default or already there.
             int difference = target - product.qtyOnHand();                // Positive = stock must go up.
             movements.add(new StockMovement(nextMovementId(), now, product.sku(), product.displayName(),
                     difference > 0 ? "Stock In" : "Adjust", Math.abs(difference), "Default stock restored", ""));

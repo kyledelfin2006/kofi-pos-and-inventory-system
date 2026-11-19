@@ -20,7 +20,7 @@ An offline point-of-sale and stock-management desktop application that lets a sm
 
 ## Positioning
 
-Sales and stock movements are handled together in one offline Java desktop application, with records held in Java collections and persisted locally as CSV files.
+Sales and stock movements are handled together in one offline Java desktop application, with records held in Java collections and persisted locally in SQLite.
 
 ## Operating Context
 
@@ -28,16 +28,16 @@ The system is intended for a single store and local desktop use. It uses Philipp
 
 ## Capabilities and Constraints
 
-Confirmed from the user brief: login, dashboard, navigation, POS search and checkout, product management, stock movements, receipt detail and voiding, reports, and store settings. Use Java with a JavaFX GUI. Do not integrate SQL or an external database; manage runtime records with Java collections. Seed data should be available as CSV. The provided textbox rules define validation, keyboard behavior, money formatting, field limits, and read-only fields. The assignment also requires add/view/update/delete/search/sort, ArrayList, LinkedList, Stack, Queue, linear search, binary search, two handwritten sorting algorithms, and recursion.
+The current direction is an offline JavaFX POS with login, dashboard, navigation, POS search and checkout, product management, stock movements, receipt detail and voiding, reports, and store settings. Runtime records stay in Java collections and are persisted in a local SQLite database. The provided textbox rules define validation, keyboard behavior, money formatting, field limits, and read-only fields. The assignment also requires add/view/update/delete/search/sort, ArrayList, LinkedList, Stack, Queue, linear search, binary search, two handwritten sorting algorithms, and recursion.
 
 ## Evidence on Hand
 
-The user supplied the complete CC 104 project requirements and POS textbox MVP. No real store data, logo, or receipt samples were supplied; starter CSV records will be clearly fictional demonstration data.
+The user supplied the complete CC 104 project requirements and POS textbox MVP. No real store data, logo, or receipt samples were supplied; SQL seed records are clearly fictional demonstration data.
 
 ## Product Principles
 
 - Keep common checkout work direct and keyboard-friendly.
 - Keep sale, receipt, and stock history consistent.
 - Keep validation visible at the field that needs attention.
-- Keep local data easy to inspect and back up as CSV.
+- Keep local data easy to back up as one database file.
 - Make required data structures and algorithms part of actual workflows.
