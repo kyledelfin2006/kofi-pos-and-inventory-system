@@ -23,7 +23,7 @@ Packaged copies are 320 px so they stay sharp at the largest size we show (about
 2. Otherwise the icon named after the product: `Café Latte` → `cafe-latte.png` (lower case, accents removed, spaces to hyphens). All sizes and temperatures of one drink share one icon.
 3. Otherwise the Coffee or Food placeholder. A missing picture never breaks a screen.
 
-Because step 2 uses the name, the existing `data/` files and the seed CSV need no change. Adding a new menu item later only needs a new `<name>.png`.
+Because step 2 uses the name, the SQL seed and existing database layout do not affect image lookup. Adding a new menu item later only needs a new `<name>.png`.
 
 ## Where icons appear
 

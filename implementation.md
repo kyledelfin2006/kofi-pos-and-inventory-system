@@ -2,7 +2,7 @@
 
 ## Project fit
 
-Build a JavaFX desktop point-of-sale and stock-management system for a small store. It will work offline and use CSV files for local persistence and starter data; all active records are loaded into Java collections while the program runs. No SQL database or external services are used.
+Build a JavaFX desktop point-of-sale and stock-management system for a small store. It works offline and uses a local SQLite database for persistence and SQL seed data; active records are loaded into Java collections while the program runs.
 
 The assignment's employee attendance sentence is a sample project description, not a required feature for this POS project. The system will instead demonstrate the same required GUI, record operations, data structures, and algorithms using products, sales, and stock movements.
 
@@ -43,24 +43,13 @@ The assignment's employee attendance sentence is a sample project description, n
 | Queue | Pending low-stock restock alerts, processed in FIFO order when restocking is addressed |
 | Binary search | Handwritten exact-SKU search over a SKU-sorted product snapshot for duplicate checks/lookups |
 | Recursion | Recursive inventory valuation total over the product list |
-| No database | CSV files under the local `data/` directory; seed CSV resources copied there on first launch |
+| Persistence | Local SQLite database at `data/kofi-pos.db`; SQL seed resources initialize the six record types |
 
 Sorting and searching required for the assignment will use explicit loops/recursion rather than `Collections.sort`, `List.sort`, or built-in search utilities. JavaFX may still use observable lists for table display.
 
-## Local CSV data
+## Local SQL data
 
-Commit small, human-readable seed files under `src/main/resources/seed/`. On first launch, copy them into `data/`; thereafter, load and save the `data/` copies so user edits survive restarts. The data directory is relative to the application working directory.
-
-| File | Columns |
-|---|---|
-| `products.csv` | `sku,name,category,variant,size_oz,unit,cost_price,selling_price,reorder_level,qty_on_hand,active,image` |
-| `users.csv` | `username,salt,password_hash` |
-| `sales.csv` | `receipt_no,sold_at,cashier,subtotal,discount,total,cash_tendered,change_amount,status,void_reason` |
-| `sale_lines.csv` | `receipt_no,sku,product_name,unit_price,quantity,line_total` |
-| `stock_movements.csv` | `id,occurred_at,sku,product_name,type,quantity,reason,reference` |
-| `settings.csv` | `store_name,store_address,receipt_footer` |
-
-CSV values will be quoted/escaped correctly, including commas and quotes in names and notes. File writes will use a temporary sibling file followed by replacement so an interrupted save is less likely to leave a truncated data file. Seed products are the Kofi menu: 16 coffee SKUs (4 drinks x Hot 8/12 oz, Iced 16/22 oz) and 4 food items, with placeholder prices and a starting stock of 50 each. Seed login will be `admin` / `admin123`; the CSV stores a salted PBKDF2 password hash, not the plaintext password. This is a demo account and can be changed in the local user CSV.
+`src/main/resources/seed/seed.sql` supplies the default records. On first launch, SQLite creates `data/kofi-pos.db` with tables for products, users, sales, sale lines, stock movements, and settings. Money values are stored as decimal text to preserve exact cents; original list order is stored with each record. Saves update all six record types in one transaction. Existing installations migrate their six legacy CSV files once, then remove those files after the database transaction commits. Seed products are the Kofi menu: 16 coffee SKUs (4 drinks x Hot 8/12 oz, Iced 16/22 oz) and 4 food items, with placeholder prices and a starting stock of 50 each. The seed login is `admin` / `admin123`; SQLite stores its salted PBKDF2 password hash, not the plaintext password.
 
 ## Current project structure
 
@@ -70,8 +59,8 @@ CSV values will be quoted/escaped correctly, including commas and quotes in name
 - `src/main/java/com/kofi/pos/algorithm/` — hand-written sorts, searches, recursion; `security/` and `util/` — password check and money rounding.
 - `src/main/java/com/kofi/pos/service/PosService.java` — in-memory store state, business validation, and use cases (including reset to default data).
 - `src/main/java/com/kofi/pos/model/` — immutable domain records shared by the service, views, and persistence adapter.
-- `src/main/java/com/kofi/pos/data/PosRepository.java` — persistence port; `CsvPosRepository` coordinates loading/saving, `data/csv/*Csv` classes describe each file's columns and row mapping, and `CsvStore` handles CSV files.
-- `src/main/resources/seed/*.csv` — initial products, demo user, and store settings.
+- `src/main/java/com/kofi/pos/data/PosRepository.java` — persistence port implemented by `SqlitePosRepository`.
+- `src/main/resources/seed/seed.sql` — initial products, demo user, and store settings.
 - `src/main/resources/style.css` — shared JavaFX look and control states.
 - `docs/architecture.md` and `docs/code-walkthrough.md` — dependency map, SOLID choices, and the main code paths explained in order.
 
@@ -80,7 +69,7 @@ Keep screens in Java code unless a view is substantially clearer in FXML. Avoid 
 ## Implementation sequence
 
 1. Establish the runnable JavaFX/Maven skeleton.
-2. Add model records, seed CSV files, CSV loading/saving, and the in-memory service collections.
+2. Add model records, SQL seed data, database loading/saving, and the in-memory service collections.
 3. Implement handwritten searches, both sorts, recursive valuation, product CRUD, inventory movement rules, restock queue, and activity stack.
 4. Build login, dashboard/navigation, product, stock, and settings screens.
 5. Build POS checkout, receipt detail/void, reports, and field-level validation/shortcuts.
@@ -88,14 +77,14 @@ Keep screens in Java code unless a view is substantially clearer in FXML. Avoid 
 
 ## Current implementation status
 
-- The Java sources compile with `javac --release 17` against the locally cached JavaFX Controls 21.0.6 jars.
-- Maven is not available in the current environment, so `mvn javafx:run` could not be exercised here.
-- Seed CSVs, all seven modules, local persistence, and the assignment data-structure/algorithm mappings are implemented.
+- Before this SQLite integration, the Java sources compiled with `javac --release 17` against the locally cached JavaFX Controls 21.0.6 jars.
+- This SQLite update could not be compiled here: the Maven launcher returned `Access is denied`, and the local Java compiler did not return.
+- SQL seed data, all seven modules, local persistence, and the assignment data-structure/algorithm mappings are implemented.
 
 ## Completion checklist
 
-- [x] JavaFX desktop entry point, login, and offline-first CSV startup are implemented.
-- [x] Seed CSVs initialize local data; saved edits persist across restarts.
+- [x] JavaFX desktop entry point, login, and offline-first SQLite startup are implemented.
+- [x] SQL seed data initializes the local database; saved edits persist across restarts.
 - [x] Product add/view/update/delete-or-deactivate/search/sort are implemented.
 - [x] Stock movements validate and update on-hand quantities.
 - [x] POS validates cart, discount, tender, generates receipts, and updates stock.

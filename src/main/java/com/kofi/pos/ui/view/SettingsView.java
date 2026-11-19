@@ -86,7 +86,7 @@ public final class SettingsView {
     /** The danger-zone card with the reset button. */
     private VBox resetPanel() {
         Label description = new Label("Restore the original sample data (products, users, store settings) "
-                + "from the default CSV files. All sales, receipts, stock movements and edits are erased.");
+                + "from the default database seed. All sales, receipts, stock movements and edits are erased.");
         description.setWrapText(true);
         description.getStyleClass().add("muted-text");
         Label error = errorLabel();
@@ -101,7 +101,7 @@ public final class SettingsView {
             confirm.setHeaderText("Reset all data to default?");
             if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
             try {
-                service.resetToDefaults();                  // Restore default CSVs and reload memory.
+                service.resetToDefaults();                  // Restore defaults and reload memory.
                 notice.accept("Data reset to default");
                 settingsSaved.run();                        // Refresh sidebar, title and this screen.
             } catch (IOException e) { error.setText("Could not reset data: " + e.getMessage()); }

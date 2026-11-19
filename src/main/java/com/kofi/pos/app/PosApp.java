@@ -1,7 +1,6 @@
 package com.kofi.pos.app; // Application layer: window, login, navigation. It wires everything together.
 
-import com.kofi.pos.data.CsvPosRepository;    // CSV storage implementation.
-import com.kofi.pos.data.csv.CsvStore;            // Low-level CSV file helper.
+import com.kofi.pos.data.SqlitePosRepository; // SQLite storage implementation.
 import com.kofi.pos.service.PosService;       // Business layer.
 import com.kofi.pos.ui.common.AssetLoader;   // Logo and picture loading.
 import com.kofi.pos.ui.view.DashboardView;    // Overview screen.
@@ -55,11 +54,11 @@ public final class PosApp extends Application {
     public void start(Stage primaryStage) {
         stage = primaryStage; // Remember the window.
         try {
-            // Composition root: choose CSV storage, hand it to the service.
-            service = new PosService(new CsvPosRepository(new CsvStore()));
+            // Composition root: choose SQLite storage, hand it to the service.
+            service = new PosService(new SqlitePosRepository());
             showLogin(); // Open the sign-in screen.
         } catch (IOException e) {
-            showFatal("Local CSV data could not be opened", e.getMessage());
+            showFatal("Local database could not be opened", e.getMessage());
         }
     }
 
@@ -196,7 +195,7 @@ public final class PosApp extends Application {
         }
         Region spacer = new Region(); // Pushes the exit button to the bottom.
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        Label local = new Label("Works without internet\nRecords saved to local CSV");
+        Label local = new Label("Works without internet\nRecords saved to local database");
         local.getStyleClass().add("nav-footnote");
         local.setPadding(new Insets(14, 18, 20, 18));
         Button quit = new Button("Exit application");

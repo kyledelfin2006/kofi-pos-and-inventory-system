@@ -83,21 +83,21 @@ public final class StockView {
 
     /** The card that returns every product's stock to its default level after a confirmation. */
     private VBox resetPanel() {
-        Label description = new Label("Puts every product's stock back to its default level, for example after a day of selling. Every change is logged in the movement history. Products, prices and sales are kept.");
+        Label description = new Label("Restores every starter product to 50 units, including inactive items. Changes are logged in movement history. Custom products, prices and sales are kept.");
         description.setWrapText(true);
         description.setMinHeight(javafx.scene.layout.Region.USE_PREF_SIZE); // Let the text wrap instead of cutting off with "...".
         description.getStyleClass().add("muted-text");
         Label error = errorLabel();
-        Button reset = new Button("Restore default stock");
+        Button reset = new Button("Reset stock to default (50)");
         reset.getStyleClass().add("secondary-button");
         reset.setMaxWidth(Double.MAX_VALUE);
         reset.setOnAction(event -> {
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                    "Every product's stock will go back to its default level. Continue?",
+                    "Every starter product's stock will be reset to 50 units. Continue?",
                     ButtonType.CANCEL, ButtonType.OK);
             confirm.initOwner(reset.getScene().getWindow());        // Centre over the main window.
-            confirm.setTitle("Restore default stock");
-            confirm.setHeaderText("Restore stock to the defaults?");
+            confirm.setTitle("Reset stock to default");
+            confirm.setHeaderText("Reset starter stock to 50 units?");
             if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
             try {
                 service.restoreDefaultStock();

@@ -4,7 +4,7 @@ This guide follows the main execution paths; every Java file additionally carrie
 
 ## Startup and navigation
 
-1. [`PosApp.start`](../src/main/java/com/kofi/pos/app/PosApp.java) is the composition root. It creates the CSV adapter, injects it into `PosService`, and opens sign-in.
+1. [`PosApp.start`](../src/main/java/com/kofi/pos/app/PosApp.java) is the composition root. It creates the SQLite adapter, injects it into `PosService`, and opens sign-in.
 2. [`PosService` construction](../src/main/java/com/kofi/pos/service/PosService.java) loads the repository snapshot into its `ArrayList` collections.
 3. The constructor finds the next stock movement ID, rebuilds the recent activity `Stack`, then refreshes the FIFO restock `Queue`.
 4. [`showLogin`](../src/main/java/com/kofi/pos/app/PosApp.java) trims and bounds the username, then calls `authenticate` when the user submits.
@@ -57,19 +57,17 @@ This guide follows the main execution paths; every Java file additionally carrie
 ## Reset to default data
 
 1. [`SettingsView.resetPanel`](../src/main/java/com/kofi/pos/ui/view/SettingsView.java) shows a confirmation dialog, then calls `PosService.resetToDefaults`.
-2. The service calls `PosRepository.resetToDefaults`, implemented by `CsvPosRepository`, which calls `CsvStore.restoreDefaults`.
-3. `restoreDefaults` copies each `/seed/*.csv` resource over the matching file in `data/` (`REPLACE_EXISTING`), then the repository reads them back into a `StoreData` snapshot.
+2. The service calls `PosRepository.resetToDefaults`, implemented by `SqlitePosRepository`.
+3. The repository replaces the six database tables with the records in `/seed/seed.sql` inside one transaction, then reads them back into a `StoreData` snapshot.
 4. The service's `applySnapshot` clears and refills every collection and rebuilds the activity stack and restock queue.
 5. The view shows a notice and reloads the Settings screen and sidebar.
 
-## CSV read/write
+## SQLite read/write
 
-1. [`CsvPosRepository.load`](../src/main/java/com/kofi/pos/data/CsvPosRepository.java) calls `CsvStore.initialize`, checks that every file's header matches the current layout (restoring defaults if not), then reads data.
-2. Each CSV read skips its header and maps each remaining row into one typed model record.
-3. [`CsvStore.initialize`](../src/main/java/com/kofi/pos/data/csv/CsvStore.java) creates `data/` and copies a packaged seed only when that file is absent.
-4. [`CsvStore.read`](../src/main/java/com/kofi/pos/data/csv/CsvStore.java) walks the file one character at a time. `quoted` tracks CSV quote state; `field` accumulates a cell; commas and line endings end cells/rows only outside quoted values; doubled quotes become one quote.
-5. [`CsvPosRepository.save`](../src/main/java/com/kofi/pos/data/CsvPosRepository.java) maps typed values back into the established CSV column order.
-6. [`CsvStore.write`](../src/main/java/com/kofi/pos/data/csv/CsvStore.java) serializes the header and rows, writes a temporary sibling file, then replaces the target (atomic move when supported).
+1. [`SqlitePosRepository.load`](../src/main/java/com/kofi/pos/data/SqlitePosRepository.java) creates or opens `data/kofi-pos.db`, initializes its six record tables, then reads a typed snapshot.
+2. The tables store products, users, sales, sale lines, stock movements, and settings. Decimal money is stored as text to preserve cents exactly; an explicit position preserves each snapshot list's order.
+3. On a first launch with old CSV files present, the repository validates and imports each available record type in one transaction. After commit, it removes those legacy files.
+4. [`SqlitePosRepository.save`](../src/main/java/com/kofi/pos/data/SqlitePosRepository.java) replaces all six record sets in one transaction, so a failed write rolls back the complete snapshot.
 
 ## Assignment collections and algorithms
 
