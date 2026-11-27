@@ -9,7 +9,9 @@ colors:
   surface: "#ffffff"
   sidebar: "#1a1411"
   text: "#1c1612"
-  muted-text: "#ab6536"
+  muted-text: "#8a4f26"
+  placeholder: "#7d6a5a"
+  success: "#24704e"
   border: "#e4e0dc"
   error: "#b33535"
   warning: "#936619"
@@ -80,6 +82,8 @@ The interface keeps sale math and stock status easy to scan during everyday shop
 
 ## Colors
 
+All colours are defined once as `-kofi-*` tokens at the top of `src/main/resources/style.css`; change a colour there, not in individual rules. Secondary text, placeholder text and counters meet 4.5:1 contrast on white and on the canvas.
+
 Coffee brown is reserved for primary actions and active states. The near-black rail anchors navigation. Neutral white and soft warm grey surfaces carry tables and forms; red and amber are reserved for errors and warnings.
 
 **The Signal Rule.** Use accent color to identify an action or a state, never as decoration.
@@ -106,7 +110,11 @@ Use gently rounded corners for fields, buttons, and panels. Read-only fields use
 
 ## Components
 
-Buttons share one shape and clear primary, secondary, quiet, and destructive roles. Inputs use a neutral border, a visible brown focus state, and a red invalid state. Tables use restrained striping and a tinted selection row. Navigation uses light text on the dark rail with a stronger green active row.
+Buttons share one shape and clear primary, secondary, quiet, and destructive roles. Inputs use a neutral border, a visible brown focus state, and a red invalid state. Tables use restrained striping and a tinted selection row; money and quantity columns are right-aligned, and low or out-of-stock rows say "Low" or "Out" in words as well as colour. Navigation uses an outline icon, light text and its shortcut on the dark rail, with a coffee-brown active row.
+
+**Messages.** Confirmations appear as a toast at the bottom right and fade after about three seconds; an error toast stays until clicked. Confirmation dialogs name their action ("Delete product", "Reset data"), turn the action button red when it is destructive, and never make a destructive action the Enter default. Field errors stay beside the field and appear only after the field has been edited or left, so a blank form is not shown in red.
+
+**Keyboard.** Every control shows one brown focus ring. Ctrl+1 to Ctrl+7 switch screens, Ctrl+F or `/` focus the screen's search box, Ctrl+Enter completes a sale, and Esc clears the current form. Screens with a search box open with the cursor in it.
 
 ## Do's and Don'ts
 

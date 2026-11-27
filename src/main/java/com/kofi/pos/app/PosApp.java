@@ -3,6 +3,9 @@ package com.kofi.pos.app; // Application layer: window, login, navigation. It wi
 import com.kofi.pos.data.SqlitePosRepository; // SQLite storage implementation.
 import com.kofi.pos.service.PosService;       // Business layer.
 import com.kofi.pos.ui.common.AssetLoader;   // Logo and picture loading.
+import com.kofi.pos.ui.common.Dialogs;       // Styled confirmation dialogs.
+import com.kofi.pos.ui.common.NavIcons;      // Sidebar icons.
+import com.kofi.pos.ui.common.Toast;         // Bottom-right messages.
 import com.kofi.pos.ui.view.DashboardView;    // Overview screen.
 import com.kofi.pos.ui.view.PointOfSaleView;  // Checkout screen.
 import com.kofi.pos.ui.view.ProductView;      // Product maintenance screen.
@@ -20,6 +23,9 @@ import javafx.scene.Scene;                     // Window content.
 import javafx.scene.control.*;                 // Label, Button, TextField, PasswordField, Alert, ScrollPane, Separator ...
 import javafx.scene.image.ImageView;       // Shows the logo.
 import javafx.scene.input.KeyCode;             // Keys.
+import javafx.scene.input.KeyCodeCombination;  // Keyboard shortcuts such as Ctrl+1.
+import javafx.scene.input.KeyCombination;      // Modifier keys.
+import javafx.scene.input.KeyEvent;            // Key events.
 import javafx.scene.layout.*;                  // VBox, HBox, BorderPane, StackPane, Region, Priority.
 import javafx.stage.Stage;                     // The window.
 
@@ -45,7 +51,8 @@ public final class PosApp extends Application {
     private BorderPane appShell;         // Layout: sidebar left, top bar top, content centre.
     private StackPane contentHost;       // Holds whichever screen is active.
     private Label pageTitle;             // Title in the top bar.
-    private Label statusLabel;           // Status message in the top bar.
+    private final Toast toast = new Toast(); // Messages shown over the app.
+    private Node currentView;           // The screen being shown (searched for its search box).
     private PointOfSaleView activePosView; // Non-null only while the checkout screen is showing.
     private String pendingStockSku;      // SKU to preselect when the Stock screen opens.
 
@@ -138,6 +145,7 @@ public final class PosApp extends Application {
                 field("Username *", username), field("Password *", password), error, login, demo);
         form.getStyleClass().add("login-panel");
         form.setMaxWidth(430);
+        form.setMaxHeight(Region.USE_PREF_SIZE); // Panel is as tall as its content, not the whole window.
         form.setPadding(new Insets(34));
 
         StackPane root = new StackPane(form); // Centres the form in the window.
@@ -167,12 +175,80 @@ public final class PosApp extends Application {
         appShell.setLeft(buildNavigation());
         appShell.setTop(buildTopBar());
         appShell.setCenter(contentHost);
+        StackPane shellRoot = new StackPane(appShell, toast.node()); // Toasts float above the layout.
         stage.setTitle(APP_NAME);
         stage.setMinWidth(1100);
         stage.setMinHeight(720);
-        stage.setScene(scene(appShell));
+        Scene shellScene = scene(shellRoot);
+        installShortcuts(shellScene);
+        stage.setScene(shellScene);
         stage.setMaximized(true);
         showModule(module);
+    }
+
+    /** Keyboard shortcuts: Ctrl+1..7 switch screens, Ctrl+F or / focus search, Ctrl+Enter completes a sale. */
+    private void installShortcuts(Scene shellScene) {
+        KeyCode[] digits = {KeyCode.DIGIT1, KeyCode.DIGIT2, KeyCode.DIGIT3, KeyCode.DIGIT4, KeyCode.DIGIT5, KeyCode.DIGIT6, KeyCode.DIGIT7};
+        for (int i = 0; i < MODULES.size(); i++) {
+            String module = MODULES.get(i);
+            shellScene.getAccelerators().put(new KeyCodeCombination(digits[i], KeyCombination.CONTROL_DOWN), () -> showModule(module));
+        }
+        shellScene.getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN), this::focusSearch);
+        shellScene.getAccelerators().put(new KeyCodeCombination(KeyCode.ENTER, KeyCombination.CONTROL_DOWN), () -> {
+            if (activePosView != null) activePosView.completeSale();
+        });
+        shellScene.addEventFilter(KeyEvent.KEY_TYPED, event -> { // "/" jumps to search unless the user is already typing.
+            if ("/".equals(event.getCharacter()) && !(shellScene.getFocusOwner() instanceof TextInputControl)) {
+                focusSearch();
+                event.consume();
+            }
+        });
+    }
+
+    /** Puts the cursor in the current screen's search box, if it has one. */
+    private void focusSearch() {
+        TextField field = findSearch();
+        if (field == null) return;
+        Runnable focus = () -> { field.requestFocus(); field.selectAll(); };
+        if (field.getScene() != null) { focus.run(); return; }
+        field.sceneProperty().addListener(new javafx.beans.value.ChangeListener<Scene>() { // A new screen joins the window on the next layout pass.
+            @Override public void changed(javafx.beans.value.ObservableValue<? extends Scene> value, Scene old, Scene now) {
+                if (now == null) return;
+                field.sceneProperty().removeListener(this);
+                javafx.application.Platform.runLater(focus);
+            }
+        });
+    }
+
+    /** The current screen's search box (a text field whose prompt starts with "Search"), or null. */
+    private TextField findSearch() {
+        if (currentView == null) return null;
+        for (Node node : currentView.lookupAll(".text-field")) {
+            if (node instanceof TextField field && field.getPromptText() != null && field.getPromptText().startsWith("Search")) return field;
+        }
+        return null;
+    }
+
+    /** One sidebar entry: icon, name, and (when given) its keyboard shortcut at the right edge. */
+    private Button navButton(String name, String iconName, String hint) {
+        Label text = new Label(name);
+        text.getStyleClass().add("nav-text");
+        Region gap = new Region();
+        HBox.setHgrow(gap, Priority.ALWAYS);
+        Label shortcut = new Label(hint);
+        shortcut.getStyleClass().add("nav-hint");
+        HBox row = new HBox(10, NavIcons.of(iconName), text, gap, shortcut);
+        row.setAlignment(Pos.CENTER_LEFT);
+        Button button = new Button();
+        button.setGraphic(row);
+        button.setUserData(name);             // Used to find the active button; the visible text lives in the graphic.
+        button.setAccessibleText(name);
+        button.getStyleClass().add("nav-button");
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setAlignment(Pos.CENTER_LEFT);
+        row.prefWidthProperty().bind(button.widthProperty().subtract(28)); // Lets the hint sit at the right edge.
+        if (!hint.isEmpty()) button.setTooltip(new Tooltip(name + " (" + hint + ")"));
+        return button;
     }
 
     /** Builds the left sidebar with module buttons and the Exit button. */
@@ -185,11 +261,9 @@ public final class PosApp extends Application {
 
         VBox links = new VBox(6);
         links.setPadding(new Insets(8, 10, 10, 10));
-        for (String module : MODULES) { // One button per module.
-            Button link = new Button(module);
-            link.getStyleClass().add("nav-button");
-            link.setMaxWidth(Double.MAX_VALUE);
-            link.setAlignment(Pos.CENTER_LEFT);
+        for (int i = 0; i < MODULES.size(); i++) { // One button per module.
+            String module = MODULES.get(i);
+            Button link = navButton(module, module, "Ctrl+" + (i + 1));
             link.setOnAction(event -> showModule(module));
             links.getChildren().add(link);
         }
@@ -198,16 +272,11 @@ public final class PosApp extends Application {
         Label local = new Label("Works without internet\nRecords saved to local database");
         local.getStyleClass().add("nav-footnote");
         local.setPadding(new Insets(14, 18, 20, 18));
-        Button quit = new Button("Exit application");
-        quit.getStyleClass().add("nav-button");
-        quit.setMaxWidth(Double.MAX_VALUE);
-        quit.setAlignment(Pos.CENTER_LEFT);
+        Button quit = navButton("Exit application", "Exit", "");
         quit.setOnAction(event -> {
             if (!service.cart().isEmpty()) { // Warn before throwing away an unfinished sale.
-                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                        "The current cart has not been checked out. Exit and discard it?", ButtonType.CANCEL, ButtonType.OK);
-                confirm.initOwner(stage);
-                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+                if (!Dialogs.confirm(stage, "Discard the current sale?",
+                        "The current cart has not been checked out. Exit and discard it?", "Exit and discard", true)) return;
                 service.clearCart();
             }
             stage.close();
@@ -222,8 +291,6 @@ public final class PosApp extends Application {
     private HBox buildTopBar() {
         pageTitle = new Label();
         pageTitle.getStyleClass().add("topbar-title");
-        statusLabel = new Label("Local data ready");
-        statusLabel.getStyleClass().add("status-text");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         Label user = new Label("Signed in as  " + cashier);
@@ -235,7 +302,7 @@ public final class PosApp extends Application {
             pendingStockSku = null;
             showLogin();
         });
-        HBox bar = new HBox(18, pageTitle, statusLabel, spacer, user, exit);
+        HBox bar = new HBox(18, pageTitle, spacer, user, exit);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(16, 24, 16, 28));
         bar.getStyleClass().add("topbar");
@@ -261,16 +328,21 @@ public final class PosApp extends Application {
             case "Settings" -> new SettingsView(service, stage, this::showNotice, this::showModule, this::settingsSaved).build();
             default -> new DashboardView(service, this::openStock).build();
         };
+        currentView = view;
         ScrollPane scroll = new ScrollPane(view); // Allow scrolling on small windows.
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(module.equals("Point of Sale")); // Checkout fills the window so the totals stay at the bottom.
         scroll.getStyleClass().add("content-scroll");
         contentHost.getChildren().setAll(scroll);
+        javafx.application.Platform.runLater(() -> { // Start where the user works: the search box, or nowhere in the sidebar.
+            if (findSearch() != null) focusSearch(); else contentHost.requestFocus();
+        });
         for (Node node : ((VBox) appShell.getLeft()).getChildren()) { // Update the active-button highlight.
             if (node instanceof VBox links) {
                 for (Node link : links.getChildren()) {
                     if (link instanceof Button button) {
                         button.getStyleClass().remove("nav-button-active");
-                        if (button.getText().equals(module)) button.getStyleClass().add("nav-button-active");
+                        if (module.equals(button.getUserData())) button.getStyleClass().add("nav-button-active");
                     }
                 }
             }
@@ -290,13 +362,9 @@ public final class PosApp extends Application {
         showModule("Settings");
     }
 
-    /** Shows a green message in the top bar. */
+    /** Shows a short confirmation toast at the bottom right. */
     private void showNotice(String message) {
-        if (statusLabel != null) {
-            statusLabel.setText(message);
-            statusLabel.getStyleClass().remove("status-error");
-            statusLabel.getStyleClass().add("status-success");
-        }
+        toast.success(message);
     }
 
     /** Shows an unrecoverable startup error and closes the app. */
@@ -304,6 +372,7 @@ public final class PosApp extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR, detail, ButtonType.OK);
         alert.setTitle(title);
         alert.setHeaderText(title);
+        Dialogs.style(alert.getDialogPane());
         alert.showAndWait();
         stage.close();
     }

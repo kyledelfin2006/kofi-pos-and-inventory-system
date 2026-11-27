@@ -68,6 +68,7 @@ public final class PointOfSaleView {
         // ============ LEFT SIDE: search, category chips and the product tiles ============
         TextField search = new TextField();
         search.setPromptText("Search by name or SKU");
+        search.setTooltip(new javafx.scene.control.Tooltip("Search (Ctrl+F or /)"));
         search.setTextFormatter(limitFormatter(60));
         trimOnBlur(search);
         Button clear = new Button("×");
@@ -77,6 +78,8 @@ public final class PointOfSaleView {
         HBox.setHgrow(search, Priority.ALWAYS);
         Label searchError = new Label();
         searchError.getStyleClass().add("field-error");
+        searchError.managedProperty().bind(searchError.textProperty().isNotEmpty());
+        searchError.visibleProperty().bind(searchError.textProperty().isNotEmpty());
 
         ToggleGroup categories = new ToggleGroup(); // One chip is always selected: All, Coffee, Food ...
         HBox chips = new HBox(8);
@@ -97,7 +100,8 @@ public final class PointOfSaleView {
         tileHost.setFitToWidth(true);
         tileHost.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         tileHost.getStyleClass().add("content-scroll");
-        tileHost.setPrefHeight(505);
+        tileHost.setPrefHeight(420);
+        tileHost.setMinHeight(240);
 
         Consumer<Product> addProduct = product -> { // Called when a tile or size button is chosen.
             try {
@@ -158,7 +162,7 @@ public final class PointOfSaleView {
         quantity.setCellFactory(column -> new TableCell<>() { // Each Qty cell is an editable text box.
             private final TextField editor = new TextField();
             { // Instance initialiser: configure the editor once per cell.
-                editor.setPrefColumnCount(4);
+                editor.setPrefColumnCount(3);
                 editor.setTextFormatter(integerFormatter());
                 editor.setOnAction(event -> commit());                                   // Enter commits.
                 editor.focusedProperty().addListener((obs, was, focused) -> { if (!focused) commit(); }); // Leaving the box commits.
@@ -222,10 +226,16 @@ public final class PointOfSaleView {
                 setGraphic(empty ? null : button);
             }
         });
+        com.kofi.pos.ui.common.UiSupport.numeric(lineTotal);
+        item.setPrefWidth(165);        // Wide enough for names like "Caramel Latte · Hot 12 oz".
+        quantity.setPrefWidth(78);
+        lineTotal.setPrefWidth(78);
         cartTable.getColumns().addAll(List.of(item, quantity, lineTotal, remove));
         cartTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        cartTable.setPlaceholder(new Label("Search for a product to begin."));
-        cartTable.setPrefHeight(320);
+        cartTable.setPlaceholder(new Label("Your cart is empty.\nTap a product to add it."));
+        cartTable.setPrefHeight(240);
+        cartTable.setMinHeight(110);
+        VBox.setVgrow(cartTable, Priority.ALWAYS); // Table takes the spare height, so totals and the sale button stay at the bottom.
         cartTable.setItems(FXCollections.observableArrayList(service.cart()));
 
         // ---- Totals and payment inputs ----
@@ -269,6 +279,7 @@ public final class PointOfSaleView {
         checkout.getStyleClass().add("primary-button");
         checkout.setMaxWidth(Double.MAX_VALUE);
         checkout.setDefaultButton(true);
+        checkout.setTooltip(new javafx.scene.control.Tooltip("Complete sale (Ctrl+Enter)"));
         Button cancel = new Button("Clear cart");
         cancel.getStyleClass().add("quiet-button");
         cancel.setOnAction(event -> {
@@ -299,13 +310,19 @@ public final class PointOfSaleView {
         tender.setOnAction(event -> { if (!checkout.isDisabled()) checkout.fire(); event.consume(); }); // Enter in tender completes the sale.
         discountError.setMaxWidth(Double.MAX_VALUE);
         tenderError.setMaxWidth(Double.MAX_VALUE);
+        for (Label message : List.of(lineError, discountError, tenderError)) { // Empty message lines take no space.
+            message.managedProperty().bind(message.textProperty().isNotEmpty());
+            message.visibleProperty().bind(message.textProperty().isNotEmpty());
+        }
         VBox cartPanel = new VBox(12, cartTitle, lineError, cartTable, totals, discountError, tenderError, checkout, cancel);
         cartPanel.getStyleClass().add("surface-panel");
         cartPanel.setPadding(new Insets(20));
-        cartPanel.setPrefWidth(570);
-        cartPanel.setMinWidth(470);
         HBox body = new HBox(20, catalog, cartPanel);
+        cartPanel.setMinWidth(460);
+        cartPanel.setMaxWidth(640);
+        cartPanel.prefWidthProperty().bind(body.widthProperty().multiply(0.42)); // Cart takes 42% of the width, within 460-640px.
         HBox.setHgrow(catalog, Priority.ALWAYS);
+        VBox.setVgrow(body, Priority.ALWAYS);
         root.getChildren().add(body);
         updateCartTotals(); // Initial calculation.
         return root;
@@ -363,8 +380,13 @@ public final class PointOfSaleView {
         cartTotalField.setText(peso(discountValid ? total : BigDecimal.ZERO));
         cartChangeField.setText(peso(discountValid && tenderValid ? service.change(discount, tender) : BigDecimal.ZERO));
         showFieldError(cartDiscountField, cartDiscountError, discountValid ? "" : "Discount cannot exceed subtotal.");
-        showFieldError(cartTenderField, cartTenderError, tenderValid || !hasCart ? "" : "Cash tendered must be at least the total.");
+        showFieldError(cartTenderField, cartTenderError, tenderValid || !hasCart || cartTenderField.getText().isBlank() ? "" : "Cash tendered must be at least the total."); // No scolding before the cashier types.
         cartCheckoutButton.setDisable(!hasCart || !discountValid || !tenderValid || invalidCartSku != null); // All conditions must hold.
+    }
+
+    /** Ctrl+Enter: completes the sale when every payment rule is met (same as pressing the button). */
+    public void completeSale() {
+        if (cartCheckoutButton != null && !cartCheckoutButton.isDisabled()) cartCheckoutButton.fire();
     }
 
     /** Escape key: clears the search box if focused there, otherwise abandons the whole cart. */

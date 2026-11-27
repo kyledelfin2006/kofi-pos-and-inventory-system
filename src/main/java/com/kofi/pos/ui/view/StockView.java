@@ -10,9 +10,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;   // Text cell value.
 import javafx.collections.FXCollections;              // Observable lists.
 import javafx.geometry.Insets;                        // Padding.
 import javafx.scene.Node;                             // Base visual type.
-import javafx.scene.control.Alert;                    // Confirmation pop-up.
 import javafx.scene.control.Button;                   // Button.
-import javafx.scene.control.ButtonType;               // OK / Cancel.
 import javafx.scene.control.ComboBox;                 // Drop-down.
 import javafx.scene.control.Label;                    // Text.
 import javafx.scene.control.TableColumn;              // Column.
@@ -71,8 +69,10 @@ public final class StockView {
             StockMovement temp = recent.get(i); recent.set(i, recent.get(j)); recent.set(j, temp);
         }
         history.setItems(FXCollections.observableArrayList(recent));
+        history.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         history.setPrefHeight(620);
-        history.setPlaceholder(new Label("Stock changes will appear here."));
+        history.setPlaceholder(new Label("No stock movements yet.\nRecord a Stock In or Stock Out and it will appear here."));
+        com.kofi.pos.ui.common.UiSupport.numeric(quantity);
         VBox log = panel("Movement history", history);
         HBox body = new HBox(18, new VBox(18, form, resetPanel()), log);
         form.setPrefWidth(350);
@@ -92,13 +92,8 @@ public final class StockView {
         reset.getStyleClass().add("secondary-button");
         reset.setMaxWidth(Double.MAX_VALUE);
         reset.setOnAction(event -> {
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                    "Every starter product's stock will be reset to 50 units. Continue?",
-                    ButtonType.CANCEL, ButtonType.OK);
-            confirm.initOwner(reset.getScene().getWindow());        // Centre over the main window.
-            confirm.setTitle("Reset stock to default");
-            confirm.setHeaderText("Reset starter stock to 50 units?");
-            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
+            if (!com.kofi.pos.ui.common.Dialogs.confirm(reset.getScene().getWindow(), "Reset starter stock to 50 units?",
+                    "Every starter product's stock will be reset to 50 units. Continue?", "Reset stock", false)) return; // User backed out.
             try {
                 service.restoreDefaultStock();
                 notice.accept("Default stock restored");
@@ -175,6 +170,7 @@ public final class StockView {
             product.setValue(null);
             if (!value.isBlank()) product.show(); // Pop the list open.
         });
+        boolean[] edited = {false}; // Errors stay hidden until the user has changed something on the form.
         Runnable validateQuantity = () -> { // Re-validates the whole form after any change.
             Product selected = product.getValue();
             String entered = quantity.getText();
@@ -195,21 +191,23 @@ public final class StockView {
                 } catch (NumberFormatException ignored) { message = "Enter a whole-number quantity."; }
             }
             if (message.isEmpty() && noteInvalid) message = "A note is required for Stock Out and Adjust.";
-            error.setText(message);
-            setInvalid(product, selected == null);
-            setInvalid(type, type.getValue() == null);
-            setInvalid(quantity, quantityInvalid || selected == null);
-            setInvalid(reason, noteInvalid);
-            save.setDisable(!error.getText().isEmpty()); // Save only when no error message remains.
+            boolean show = edited[0];
+            error.setText(show ? message : "");
+            setInvalid(product, show && selected == null);
+            setInvalid(type, show && type.getValue() == null);
+            setInvalid(quantity, show && (quantityInvalid || selected == null));
+            setInvalid(reason, show && noteInvalid);
+            save.setDisable(!message.isEmpty()); // Save only when the form is valid, whether or not the message is shown yet.
         };
         type.valueProperty().addListener((obs, old, value) -> {
             boolean required = value != null && !value.equals("Stock In");
             setRequiredLabel(box, "Reason / note", required); // Add/remove the * marker.
+            edited[0] = true;
             validateQuantity.run();
         });
-        quantity.textProperty().addListener((obs, old, value) -> validateQuantity.run());
-        product.valueProperty().addListener((obs, old, value) -> validateQuantity.run());
-        reason.textProperty().addListener((obs, old, value) -> validateQuantity.run());
+        quantity.textProperty().addListener((obs, old, value) -> { edited[0] = true; validateQuantity.run(); });
+        product.valueProperty().addListener((obs, old, value) -> { edited[0] = true; validateQuantity.run(); });
+        reason.textProperty().addListener((obs, old, value) -> { edited[0] = true; validateQuantity.run(); });
         reason.focusedProperty().addListener((obs, was, focused) -> { if (!focused) reason.setText(reason.getText().trim()); });
         reference.focusedProperty().addListener((obs, was, focused) -> { if (!focused) reference.setText(reference.getText().trim()); });
         validateQuantity.run();

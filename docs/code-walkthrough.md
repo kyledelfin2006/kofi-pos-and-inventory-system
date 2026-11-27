@@ -9,7 +9,7 @@ This guide follows the main execution paths; every Java file additionally carrie
 3. The constructor finds the next stock movement ID, rebuilds the recent activity `Stack`, then refreshes the FIFO restock `Queue`.
 4. [`showLogin`](../src/main/java/com/kofi/pos/app/PosApp.java) trims and bounds the username, then calls `authenticate` when the user submits.
 5. [`authenticate`](../src/main/java/com/kofi/pos/service/PosService.java) finds the local account and compares a PBKDF2 hash using `MessageDigest.isEqual`.
-6. [`showShell`](../src/main/java/com/kofi/pos/app/PosApp.java) creates the sidebar, top bar, and module content host.
+6. [`showShell`](../src/main/java/com/kofi/pos/app/PosApp.java) creates the sidebar, top bar, and module content host, places the `Toast` layer above them, and registers the keyboard shortcuts (`installShortcuts`: Ctrl+1 to Ctrl+7, Ctrl+F, `/`, Ctrl+Enter). `showModule` moves the cursor to the screen's search box when it has one.
 7. [`showModule`](../src/main/java/com/kofi/pos/app/PosApp.java) selects a view class, gives it only the collaborators it needs, wraps the view in a `ScrollPane`, and updates the active navigation style.
 
 ## Product editing
@@ -56,11 +56,11 @@ This guide follows the main execution paths; every Java file additionally carrie
 
 ## Reset to default data
 
-1. [`SettingsView.resetPanel`](../src/main/java/com/kofi/pos/ui/view/SettingsView.java) shows a confirmation dialog, then calls `PosService.resetToDefaults`.
+1. [`SettingsView.resetPanel`](../src/main/java/com/kofi/pos/ui/view/SettingsView.java) asks `Dialogs.confirm` (a red "Reset data" button, with Cancel as the Enter default), then calls `PosService.resetToDefaults`.
 2. The service calls `PosRepository.resetToDefaults`, implemented by `SqlitePosRepository`.
 3. The repository replaces the six database tables with the records in `/seed/seed.sql` inside one transaction, then reads them back into a `StoreData` snapshot.
 4. The service's `applySnapshot` clears and refills every collection and rebuilds the activity stack and restock queue.
-5. The view shows a notice and reloads the Settings screen and sidebar.
+5. The view shows a toast notice and reloads the Settings screen and sidebar.
 
 ## SQLite read/write
 

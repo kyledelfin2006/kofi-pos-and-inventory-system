@@ -42,6 +42,19 @@ public final class ProductTables {
         price.setCellValueFactory(cell -> new ReadOnlyStringWrapper(UiSupport.peso(cell.getValue().sellingPrice())));
         TableColumn<Product, Number> quantity = new TableColumn<>("On hand");
         quantity.setCellValueFactory(cell -> new ReadOnlyIntegerWrapper(cell.getValue().qtyOnHand()));
+        quantity.setCellFactory(column -> new TableCell<>() { // Quantity plus a text badge, so low stock is not shown by colour alone.
+            @Override protected void updateItem(Number value, boolean empty) {
+                super.updateItem(value, empty);
+                getStyleClass().removeAll("stock-low-cell", "stock-out-cell");
+                Product product = empty || getTableRow() == null ? null : getTableRow().getItem();
+                if (product == null) { setText(null); return; }
+                int qty = product.qtyOnHand();
+                if (qty == 0) { setText("0 · Out"); getStyleClass().add("stock-out-cell"); }
+                else if (qty <= product.reorderLevel()) { setText(qty + " · Low"); getStyleClass().add("stock-low-cell"); }
+                else setText(String.valueOf(qty));
+            }
+        });
+        UiSupport.numeric(price, quantity);
         table.getColumns().addAll(List.of(picture, sku, name, category, price, quantity)); // Attach the columns in order.
 
         if (showActive) { // Optional extra column for the maintenance screen.
@@ -51,7 +64,7 @@ public final class ProductTables {
         }
 
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN); // Columns fill the width.
-        table.setPlaceholder(new Label("No products match this search."));                  // Shown when empty.
+        table.setPlaceholder(new Label("No products match this search.\nClear the search to see every product."));                  // Shown when empty.
         table.setSortPolicy(ignored -> false); // Disable JavaFX's built-in sorting: our own algorithms decide the order.
         return table;
     }

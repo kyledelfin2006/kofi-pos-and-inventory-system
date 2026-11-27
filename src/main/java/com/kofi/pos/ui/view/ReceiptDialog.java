@@ -28,6 +28,7 @@ public final class ReceiptDialog {
         dialog.initOwner(owner);                          // Attach to the main window.
         dialog.initModality(Modality.WINDOW_MODAL);       // Main window is blocked meanwhile.
         dialog.setTitle("Receipt · " + sale.receiptNo());
+        com.kofi.pos.ui.common.Dialogs.style(dialog.getDialogPane());
         dialog.getDialogPane().getButtonTypes().add(new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE)); // One Close button.
 
         VBox receipt = new VBox(9);                       // The "paper".

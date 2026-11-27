@@ -8,9 +8,7 @@ import javafx.collections.FXCollections;              // Observable lists.
 import javafx.geometry.Insets;                        // Padding.
 import javafx.geometry.Pos;                           // Alignment.
 import javafx.scene.Node;                             // Base visual type.
-import javafx.scene.control.Alert;                    // Pop-up dialog.
 import javafx.scene.control.Button;                   // Button.
-import javafx.scene.control.ButtonType;               // OK/Cancel.
 import javafx.scene.control.ComboBox;                 // Drop-down.
 import javafx.scene.control.Label;                    // Text.
 import javafx.scene.control.TableView;                // Table.
@@ -150,21 +148,26 @@ public final class ProductView {
         box.setPadding(new Insets(18));
         productEditSku = null;
 
+        touched.clear(); // A blank new form shows no errors until a field has been edited or left.
         Runnable validate = () -> { // Re-checks every field and enables/disables Save.
             String cleanSku = sku.getText().trim().toUpperCase(Locale.ROOT);
             String cleanName = name.getText().trim();
             BigDecimal c = parsedMoney(cost.getText());
             BigDecimal p = parsedMoney(price.getText());
             boolean duplicate = !cleanSku.isEmpty() && service.skuExists(cleanSku, productEditSku); // Binary search.
-            showFieldError(sku, skuError, duplicate ? "SKU already exists." : cleanSku.isEmpty() ? "SKU is required." : "");
-            showFieldError(name, nameError, cleanName.isEmpty() ? "Product name is required." : "");
-            showFieldError(cost, costError, c == null ? "Enter a valid price with up to 2 decimals." : "");
-            showFieldError(price, priceError, p == null ? "Enter a valid price with up to 2 decimals." : "");
-            showFieldError(reorder, reorderError, reorder.getText().isBlank() ? "Reorder level is required." : "");
+            showFieldError(sku, skuError, shown(sku, duplicate ? "SKU already exists." : cleanSku.isEmpty() ? "SKU is required." : ""));
+            showFieldError(name, nameError, shown(name, cleanName.isEmpty() ? "Product name is required." : ""));
+            showFieldError(cost, costError, shown(cost, c == null ? "Enter a valid price with up to 2 decimals." : ""));
+            showFieldError(price, priceError, shown(price, p == null ? "Enter a valid price with up to 2 decimals." : ""));
+            showFieldError(reorder, reorderError, shown(reorder, reorder.getText().isBlank() ? "Reorder level is required." : ""));
             warning.setText(c != null && p != null && p.compareTo(c) < 0 ? "Selling price is below cost." : "");
             save.setDisable(cleanSku.isEmpty() || duplicate || cleanName.isEmpty() || c == null || p == null
                     || reorder.getText().isBlank() || unit.getValue() == null);
         };
+        for (TextField watched : List.of(sku, name, cost, price, reorder)) { // Mark a field as touched once it is edited or left.
+            watched.textProperty().addListener((obs, old, value) -> touched.add(watched));
+            watched.focusedProperty().addListener((obs, was, focused) -> { if (!focused) { touched.add(watched); validate.run(); } });
+        }
         sku.textProperty().addListener((obs, old, value) -> validate.run());
         sku.textProperty().addListener((obs, old, value) -> { // Force SKU to upper case as the user types.
             String uppercase = value.toUpperCase(Locale.ROOT);
@@ -205,10 +208,8 @@ public final class ProductView {
         delete.setOnAction(event -> {
             Product selected = table.getSelectionModel().getSelectedItem();
             if (selected == null) { message.setText("Select a product first."); return; }
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Delete " + selected.displayName() + "? Products with stock or history will be deactivated.", ButtonType.CANCEL, ButtonType.OK);
-            confirm.initOwner(stage);
-            confirm.setTitle("Delete product");
-            if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            if (com.kofi.pos.ui.common.Dialogs.confirm(stage, "Delete " + selected.displayName() + "?",
+                    "Products with stock or history will be deactivated instead of removed.", "Delete product", true)) {
                 try {
                     service.deleteProduct(selected.sku());
                     clearProductForm(box);
@@ -256,6 +257,13 @@ public final class ProductView {
         if (save != null) save.setText("Update product");    // Button wording reflects edit mode.
     }
 
+    private final java.util.Set<TextField> touched = new java.util.HashSet<>(); // Fields whose errors may be shown.
+
+    /** Returns the message only for a field the user has edited or left; a pristine field shows no error yet. */
+    private String shown(TextField field, String message) {
+        return touched.contains(field) ? message : "";
+    }
+
     /** Resets the form to the blank "new product" state. */
     private void clearProductForm(VBox form) {
         productEditSku = null; // Back to create mode.
@@ -283,6 +291,8 @@ public final class ProductView {
         if (delete != null) delete.setDisable(true);
         Button save = findButton(form, "Update product");
         if (save != null) save.setText("Save product");
+        touched.clear();
+        for (TextField field : new TextField[]{sku, name, cost, price, reorder}) if (field != null) setInvalid(field, false); // Drop red outlines too.
         for (javafx.scene.Node node : form.getChildren()) if (node instanceof Label label && label.getStyleClass().contains("field-error")) label.setText(""); // Wipe old error messages.
     }
 }

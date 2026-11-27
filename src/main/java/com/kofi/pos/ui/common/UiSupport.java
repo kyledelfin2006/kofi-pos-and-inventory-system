@@ -5,6 +5,7 @@ import javafx.geometry.Insets;                 // Padding values.
 import javafx.scene.Node;                      // Base class of every visual element.
 import javafx.scene.control.Button;            // Clickable button.
 import javafx.scene.control.Label;             // Static text.
+import javafx.scene.control.TableColumn;        // Column that can be right-aligned.
 import javafx.scene.control.TextArea;          // Multi-line text input.
 import javafx.scene.control.TextField;         // Single-line text input.
 import javafx.scene.control.TextFormatter;     // Filters what the user may type.
@@ -77,11 +78,18 @@ public final class UiSupport {
         return box;
     }
 
+    /** Right-aligns numeric or money columns so the digits line up. */
+    public static void numeric(TableColumn<?, ?>... columns) {
+        for (TableColumn<?, ?> column : columns) column.getStyleClass().add("numeric-column");
+    }
+
     /** A red, wrapping label used to show validation messages. */
     public static Label errorLabel() {
         Label error = new Label();
         error.getStyleClass().add("field-error");
         error.setWrapText(true);
+        error.managedProperty().bind(error.textProperty().isNotEmpty()); // An empty message takes no space.
+        error.visibleProperty().bind(error.textProperty().isNotEmpty());
         return error;
     }
 
