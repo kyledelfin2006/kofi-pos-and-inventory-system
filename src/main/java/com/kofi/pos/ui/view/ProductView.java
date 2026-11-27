@@ -8,9 +8,7 @@ import javafx.collections.FXCollections;              // Observable lists.
 import javafx.geometry.Insets;                        // Padding.
 import javafx.geometry.Pos;                           // Alignment.
 import javafx.scene.Node;                             // Base visual type.
-import javafx.scene.control.Alert;                    // Pop-up dialog.
 import javafx.scene.control.Button;                   // Button.
-import javafx.scene.control.ButtonType;               // OK/Cancel.
 import javafx.scene.control.ComboBox;                 // Drop-down.
 import javafx.scene.control.Label;                    // Text.
 import javafx.scene.control.TableView;                // Table.
@@ -205,10 +203,8 @@ public final class ProductView {
         delete.setOnAction(event -> {
             Product selected = table.getSelectionModel().getSelectedItem();
             if (selected == null) { message.setText("Select a product first."); return; }
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Delete " + selected.displayName() + "? Products with stock or history will be deactivated.", ButtonType.CANCEL, ButtonType.OK);
-            confirm.initOwner(stage);
-            confirm.setTitle("Delete product");
-            if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            if (com.kofi.pos.ui.common.Dialogs.confirm(stage, "Delete " + selected.displayName() + "?",
+                    "Products with stock or history will be deactivated instead of removed.", "Delete product", true)) {
                 try {
                     service.deleteProduct(selected.sku());
                     clearProductForm(box);

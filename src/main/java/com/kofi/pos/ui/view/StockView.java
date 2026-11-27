@@ -10,9 +10,7 @@ import javafx.beans.property.ReadOnlyStringWrapper;   // Text cell value.
 import javafx.collections.FXCollections;              // Observable lists.
 import javafx.geometry.Insets;                        // Padding.
 import javafx.scene.Node;                             // Base visual type.
-import javafx.scene.control.Alert;                    // Confirmation pop-up.
 import javafx.scene.control.Button;                   // Button.
-import javafx.scene.control.ButtonType;               // OK / Cancel.
 import javafx.scene.control.ComboBox;                 // Drop-down.
 import javafx.scene.control.Label;                    // Text.
 import javafx.scene.control.TableColumn;              // Column.
@@ -92,13 +90,8 @@ public final class StockView {
         reset.getStyleClass().add("secondary-button");
         reset.setMaxWidth(Double.MAX_VALUE);
         reset.setOnAction(event -> {
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                    "Every starter product's stock will be reset to 50 units. Continue?",
-                    ButtonType.CANCEL, ButtonType.OK);
-            confirm.initOwner(reset.getScene().getWindow());        // Centre over the main window.
-            confirm.setTitle("Reset stock to default");
-            confirm.setHeaderText("Reset starter stock to 50 units?");
-            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
+            if (!com.kofi.pos.ui.common.Dialogs.confirm(reset.getScene().getWindow(), "Reset starter stock to 50 units?",
+                    "Every starter product's stock will be reset to 50 units. Continue?", "Reset stock", false)) return; // User backed out.
             try {
                 service.restoreDefaultStock();
                 notice.accept("Default stock restored");

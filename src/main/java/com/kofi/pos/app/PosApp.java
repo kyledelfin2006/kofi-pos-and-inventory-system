@@ -3,6 +3,8 @@ package com.kofi.pos.app; // Application layer: window, login, navigation. It wi
 import com.kofi.pos.data.SqlitePosRepository; // SQLite storage implementation.
 import com.kofi.pos.service.PosService;       // Business layer.
 import com.kofi.pos.ui.common.AssetLoader;   // Logo and picture loading.
+import com.kofi.pos.ui.common.Dialogs;       // Styled confirmation dialogs.
+import com.kofi.pos.ui.common.Toast;         // Bottom-right messages.
 import com.kofi.pos.ui.view.DashboardView;    // Overview screen.
 import com.kofi.pos.ui.view.PointOfSaleView;  // Checkout screen.
 import com.kofi.pos.ui.view.ProductView;      // Product maintenance screen.
@@ -45,7 +47,7 @@ public final class PosApp extends Application {
     private BorderPane appShell;         // Layout: sidebar left, top bar top, content centre.
     private StackPane contentHost;       // Holds whichever screen is active.
     private Label pageTitle;             // Title in the top bar.
-    private Label statusLabel;           // Status message in the top bar.
+    private final Toast toast = new Toast(); // Messages shown over the app.
     private PointOfSaleView activePosView; // Non-null only while the checkout screen is showing.
     private String pendingStockSku;      // SKU to preselect when the Stock screen opens.
 
@@ -167,10 +169,11 @@ public final class PosApp extends Application {
         appShell.setLeft(buildNavigation());
         appShell.setTop(buildTopBar());
         appShell.setCenter(contentHost);
+        StackPane shellRoot = new StackPane(appShell, toast.node()); // Toasts float above the layout.
         stage.setTitle(APP_NAME);
         stage.setMinWidth(1100);
         stage.setMinHeight(720);
-        stage.setScene(scene(appShell));
+        stage.setScene(scene(shellRoot));
         stage.setMaximized(true);
         showModule(module);
     }
@@ -204,10 +207,8 @@ public final class PosApp extends Application {
         quit.setAlignment(Pos.CENTER_LEFT);
         quit.setOnAction(event -> {
             if (!service.cart().isEmpty()) { // Warn before throwing away an unfinished sale.
-                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                        "The current cart has not been checked out. Exit and discard it?", ButtonType.CANCEL, ButtonType.OK);
-                confirm.initOwner(stage);
-                if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return;
+                if (!Dialogs.confirm(stage, "Discard the current sale?",
+                        "The current cart has not been checked out. Exit and discard it?", "Exit and discard", true)) return;
                 service.clearCart();
             }
             stage.close();
@@ -222,8 +223,6 @@ public final class PosApp extends Application {
     private HBox buildTopBar() {
         pageTitle = new Label();
         pageTitle.getStyleClass().add("topbar-title");
-        statusLabel = new Label("Local data ready");
-        statusLabel.getStyleClass().add("status-text");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         Label user = new Label("Signed in as  " + cashier);
@@ -235,7 +234,7 @@ public final class PosApp extends Application {
             pendingStockSku = null;
             showLogin();
         });
-        HBox bar = new HBox(18, pageTitle, statusLabel, spacer, user, exit);
+        HBox bar = new HBox(18, pageTitle, spacer, user, exit);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(16, 24, 16, 28));
         bar.getStyleClass().add("topbar");
@@ -290,13 +289,9 @@ public final class PosApp extends Application {
         showModule("Settings");
     }
 
-    /** Shows a green message in the top bar. */
+    /** Shows a short confirmation toast at the bottom right. */
     private void showNotice(String message) {
-        if (statusLabel != null) {
-            statusLabel.setText(message);
-            statusLabel.getStyleClass().remove("status-error");
-            statusLabel.getStyleClass().add("status-success");
-        }
+        toast.success(message);
     }
 
     /** Shows an unrecoverable startup error and closes the app. */
@@ -304,6 +299,7 @@ public final class PosApp extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR, detail, ButtonType.OK);
         alert.setTitle(title);
         alert.setHeaderText(title);
+        Dialogs.style(alert.getDialogPane());
         alert.showAndWait();
         stage.close();
     }

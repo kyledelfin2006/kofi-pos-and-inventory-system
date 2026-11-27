@@ -56,9 +56,6 @@
 .topbar { -fx-background-color: -kofi-surface; -fx-border-color: transparent transparent #e3e0dc transparent; -fx-border-width: 0 0 1px 0; }
 .topbar-title { -fx-text-fill: -kofi-text; -fx-font-size: 16px; -fx-font-weight: 700; }
 .user-chip { -fx-background-color: #f3f1ee; -fx-text-fill: #794726; -fx-padding: 8px 12px; -fx-background-radius: 16px; }
-.status-text { -fx-text-fill: -kofi-muted; -fx-font-size: 11px; }
-.status-success { -fx-text-fill: -kofi-success; }
-.status-error { -fx-text-fill: -kofi-error; }
 
 .status-text { -fx-text-fill: -kofi-muted; -fx-font-size: 11px; }
 .status-success { -fx-text-fill: -kofi-success; }
@@ -200,3 +197,28 @@
 .button:focused, .toggle-button:focused { -fx-border-color: -kofi-primary; -fx-border-width: 2px; -fx-border-radius: 6px; }
 .primary-button:focused, .danger-button:focused, .chip:selected:focused { -fx-border-color: #d9b48f; }
 .table-view:focused { -fx-border-color: -kofi-primary; }
+
+/* ---- Toast notifications (bottom-right, replace the old status label) ---- */
+.toast {
+    -fx-background-color: -kofi-surface;
+    -fx-background-radius: 8px;
+    -fx-border-color: -kofi-border;
+    -fx-border-radius: 8px;
+    -fx-padding: 11px 16px 11px 14px;
+    -fx-effect: dropshadow(gaussian, rgba(26, 20, 17, 0.18), 14, 0.1, 0, 4);
+    -fx-cursor: hand;
+}
+.toast-success { -fx-border-color: -kofi-border -kofi-border -kofi-border -kofi-success; -fx-border-width: 1px 1px 1px 4px; }
+.toast-error { -fx-border-color: -kofi-border -kofi-border -kofi-border -kofi-error; -fx-border-width: 1px 1px 1px 4px; }
+.toast .toast-text { -fx-text-fill: -kofi-text; -fx-font-weight: 600; -fx-wrap-text: true; }
+.toast .toast-mark { -fx-font-weight: 700; }
+.toast-success .toast-mark { -fx-text-fill: -kofi-success; }
+.toast-error .toast-mark { -fx-text-fill: -kofi-error; }
+
+/* ---- Dialogs share the app look ---- */
+.dialog-pane { -fx-background-color: -kofi-surface; }
+.dialog-pane > .header-panel { -fx-background-color: -kofi-surface; -fx-padding: 20px 24px 0px 24px; }
+.dialog-pane > .header-panel .label { -fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: -kofi-text; }
+.dialog-pane > .content { -fx-padding: 10px 24px 8px 24px; }
+.dialog-pane > .content.label { -fx-text-fill: -kofi-text; -fx-wrap-text: true; }
+.dialog-pane > .button-bar > .container { -fx-background-color: -kofi-surface; -fx-padding: 8px 24px 20px 24px; }

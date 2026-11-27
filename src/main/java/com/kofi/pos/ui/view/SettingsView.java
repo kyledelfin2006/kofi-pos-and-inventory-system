@@ -4,9 +4,7 @@ import com.kofi.pos.model.Settings;          // Store settings record.
 import com.kofi.pos.service.PosService;      // Business operations.
 import javafx.geometry.Insets;                // Padding.
 import javafx.scene.Node;                     // Base visual type.
-import javafx.scene.control.Alert;            // Standard pop-up dialog.
 import javafx.scene.control.Button;           // Button.
-import javafx.scene.control.ButtonType;       // OK / Cancel button definitions.
 import javafx.scene.control.Label;            // Text.
 import javafx.scene.control.TextArea;         // Multi-line input.
 import javafx.scene.control.TextField;        // Single-line input.
@@ -93,13 +91,8 @@ public final class SettingsView {
         Button reset = new Button("Reset data to default");
         reset.getStyleClass().add("danger-button");
         reset.setOnAction(event -> {
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-                    "This permanently erases the current data and restores the default data. Continue?",
-                    ButtonType.CANCEL, ButtonType.OK);
-            confirm.initOwner(stage);                       // Centre over the main window.
-            confirm.setTitle("Reset data");
-            confirm.setHeaderText("Reset all data to default?");
-            if (confirm.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) return; // User backed out.
+            if (!com.kofi.pos.ui.common.Dialogs.confirm(stage, "Reset all data to default?",
+                    "This permanently erases the current data and restores the default data. Continue?", "Reset data", true)) return; // User backed out.
             try {
                 service.resetToDefaults();                  // Restore defaults and reload memory.
                 notice.accept("Data reset to default");
