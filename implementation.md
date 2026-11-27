@@ -64,7 +64,7 @@ Sorting and searching required for the assignment will use explicit loops/recurs
 - `src/main/resources/style.css` — shared JavaFX look and control states.
 - `docs/architecture.md` and `docs/code-walkthrough.md` — dependency map, SOLID choices, and the main code paths explained in order.
 
-Keep screens in Java code unless a view is substantially clearer in FXML. Avoid adding a database, ORM, state-management framework, or extra UI library.
+Keep screens in Java code unless a view is substantially clearer in FXML. Persistence is a local SQLite database accessed through plain JDBC (`sqlite-jdbc`); avoid adding a database server, ORM, state-management framework, or extra UI library.
 
 ## Implementation sequence
 
@@ -77,8 +77,8 @@ Keep screens in Java code unless a view is substantially clearer in FXML. Avoid 
 
 ## Current implementation status
 
-- Before this SQLite integration, the Java sources compiled with `javac --release 17` against the locally cached JavaFX Controls 21.0.6 jars.
-- This SQLite update could not be compiled here: the Maven launcher returned `Access is denied`, and the local Java compiler did not return.
+- The project compiles with `mvn compile` (SQLite integration included).
+- A headless check of `SqlitePosRepository` against a fresh database passed: first-launch seed (20 products, 1 user), save then reload, and reset to defaults.
 - SQL seed data, all seven modules, local persistence, and the assignment data-structure/algorithm mappings are implemented.
 
 ## Completion checklist
@@ -92,4 +92,4 @@ Keep screens in Java code unless a view is substantially clearer in FXML. Avoid 
 - [x] Reports, settings, validation, counters, read-only styling, and keyboard behavior are implemented.
 - [x] ArrayList, LinkedList, Stack, Queue, linear search, binary search, two handwritten sorts, and recursion are used in system flows.
 - [x] The GUI includes clear actions, notifications, navigation, and an exit action.
-- [ ] Launch and exercise the GUI end-to-end; Maven is unavailable in the current environment.
+- [ ] Launch and exercise the GUI end-to-end (the repository layer is verified headlessly; the JavaFX screens have not been clicked through).
