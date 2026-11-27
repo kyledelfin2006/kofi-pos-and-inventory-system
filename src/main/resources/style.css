@@ -62,10 +62,10 @@
 .topbar { -fx-background-color: -kofi-surface; -fx-border-color: transparent transparent #e3e0dc transparent; -fx-border-width: 0 0 1px 0; }
 .topbar-title { -fx-text-fill: -kofi-text; -fx-font-size: 16px; -fx-font-weight: 700; }
 .user-chip { -fx-background-color: #f3f1ee; -fx-text-fill: #794726; -fx-padding: 8px 12px; -fx-background-radius: 16px; }
-
 .status-text { -fx-text-fill: -kofi-muted; -fx-font-size: 11px; }
 .status-success { -fx-text-fill: -kofi-success; }
 .status-error { -fx-text-fill: -kofi-error; }
+
 .page-content { -fx-background-color: -kofi-canvas; }
 .page-heading { -fx-font-size: 25px; -fx-font-weight: 700; -fx-text-fill: #1b1511; }
 .page-description { -fx-text-fill: -kofi-muted; -fx-font-size: 13px; }
@@ -112,6 +112,8 @@
 .invalid-field { -fx-border-color: #ba3e3e; -fx-border-width: 1.4px; }
 .readonly-field { -fx-background-color: #f1efed; -fx-text-fill: -kofi-muted; -fx-border-color: #ddd9d4; }
 .text-area .content { -fx-background-color: -kofi-surface; -fx-background-radius: 6px; }
+.combo-box-base > .text-field { -fx-background-color: transparent; -fx-border-width: 0; -fx-padding: 0; }
+.combo-box-base > .arrow-button { -fx-background-color: transparent; -fx-background-radius: 0 6px 6px 0; }
 .combo-box-popup .list-view { -fx-background-color: #ffffff; -fx-border-color: #d7d2cc; }
 .combo-box-popup .list-cell:hover { -fx-background-color: #f2eeea; }
 
@@ -142,6 +144,8 @@
 }
 .table-view .column-header-background { -fx-background-color: #f4f2f0; -fx-background-radius: 7px 7px 0 0; }
 .table-view .column-header { -fx-background-color: transparent; -fx-size: 38px; }
+.table-view .column-header-background .filler { -fx-background-color: transparent; }
+.table-view .column-header-background { -fx-border-color: transparent transparent -kofi-border transparent; }
 .table-view .column-header .label { -fx-text-fill: -kofi-muted; -fx-font-size: 11px; -fx-font-weight: 700; }
 .table-view .table-row-cell { -fx-background-color: -kofi-surface; -fx-border-color: transparent transparent #f1efed transparent; }
 .table-view .table-row-cell:odd { -fx-background-color: #fcfcfb; }
@@ -228,3 +232,11 @@
 .dialog-pane > .content { -fx-padding: 10px 24px 8px 24px; }
 .dialog-pane > .content.label { -fx-text-fill: -kofi-text; -fx-wrap-text: true; }
 .dialog-pane > .button-bar > .container { -fx-background-color: -kofi-surface; -fx-padding: 8px 24px 20px 24px; }
+
+/* ---- Tables: numbers line up on the right; stock status is text, not colour alone ---- */
+.table-view .table-cell { -fx-alignment: CENTER-LEFT; }
+.table-view .table-cell.numeric-column { -fx-alignment: CENTER-RIGHT; }
+.table-view .column-header.numeric-column .label { -fx-alignment: CENTER-RIGHT; }
+.table-view .table-cell.stock-low-cell { -fx-text-fill: -kofi-warning; -fx-font-weight: 700; }
+.table-view .table-cell.stock-out-cell { -fx-text-fill: -kofi-error; -fx-font-weight: 700; }
+.table-view .placeholder .label { -fx-font-size: 13px; -fx-wrap-text: true; -fx-text-alignment: center; }

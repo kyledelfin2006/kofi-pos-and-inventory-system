@@ -62,7 +62,10 @@ public final class SalesView {
         total.setCellValueFactory(c -> new ReadOnlyStringWrapper(peso(c.getValue().total())));
         TableColumn<Sale, String> status = new TableColumn<>("Status");
         status.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().status()));
+        com.kofi.pos.ui.common.UiSupport.numeric(total);
+        table.setPlaceholder(new Label("No receipts to show.\nComplete a sale on Point of Sale and it will appear here."));
         table.getColumns().addAll(List.of(receipt, soldAt, cashierColumn, total, status));
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPrefHeight(540);
         table.setSortPolicy(ignored -> false); // Our own sorts decide the order, not JavaFX.
         Label empty = new Label("Select a receipt to review its details.");
@@ -110,8 +113,10 @@ public final class SalesView {
         qty.setCellValueFactory(c -> new ReadOnlyIntegerWrapper(c.getValue().quantity()));
         TableColumn<SaleLine, String> amount = new TableColumn<>("Line total");
         amount.setCellValueFactory(c -> new ReadOnlyStringWrapper(peso(c.getValue().lineTotal())));
+        com.kofi.pos.ui.common.UiSupport.numeric(qty, amount);
         lines.getColumns().addAll(List.of(name, qty, amount));
         lines.setItems(FXCollections.observableArrayList(service.saleLines(sale.receiptNo())));
+        lines.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         lines.setPrefHeight(210);
         GridPane totals = new GridPane(); // Money summary.
         totals.setHgap(10);

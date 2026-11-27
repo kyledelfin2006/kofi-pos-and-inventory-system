@@ -53,9 +53,11 @@ public final class DashboardView {
         alertQty.setCellValueFactory(c -> new ReadOnlyIntegerWrapper(c.getValue().quantity()));
         TableColumn<RestockAlert, Number> reorder = new TableColumn<>("Reorder at");
         reorder.setCellValueFactory(c -> new ReadOnlyIntegerWrapper(c.getValue().reorderLevel()));
+        com.kofi.pos.ui.common.UiSupport.numeric(alertQty, reorder);
         alerts.getColumns().addAll(List.of(alertName, alertSku, alertQty, reorder));       // Attach columns.
         alerts.setItems(FXCollections.observableArrayList(service.restockAlerts()));       // Fill rows (FIFO order).
         alerts.setPlaceholder(new Label("Stock levels look good. No restock alerts."));    // Shown when empty.
+        alerts.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN); // Columns fill the table width.
         alerts.setPrefHeight(300);
         Button restock = new Button("Receive next restock");
         restock.getStyleClass().add("secondary-button");
@@ -74,6 +76,7 @@ public final class DashboardView {
         what.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().action()));
         TableColumn<Activity, String> detail = new TableColumn<>("Detail");
         detail.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().detail()));
+        activity.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         activity.getColumns().addAll(List.of(when, what, detail));
         activity.setItems(FXCollections.observableArrayList(service.recentActivities())); // Newest (stack top) first.
         activity.setPlaceholder(new Label("Recent sales and stock actions will appear here."));

@@ -145,6 +145,7 @@ public final class PosApp extends Application {
                 field("Username *", username), field("Password *", password), error, login, demo);
         form.getStyleClass().add("login-panel");
         form.setMaxWidth(430);
+        form.setMaxHeight(Region.USE_PREF_SIZE); // Panel is as tall as its content, not the whole window.
         form.setPadding(new Insets(34));
 
         StackPane root = new StackPane(form); // Centres the form in the window.
@@ -330,6 +331,7 @@ public final class PosApp extends Application {
         currentView = view;
         ScrollPane scroll = new ScrollPane(view); // Allow scrolling on small windows.
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(module.equals("Point of Sale")); // Checkout fills the window so the totals stay at the bottom.
         scroll.getStyleClass().add("content-scroll");
         contentHost.getChildren().setAll(scroll);
         javafx.application.Platform.runLater(() -> { // Start where the user works: the search box, or nowhere in the sidebar.

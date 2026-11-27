@@ -65,9 +65,11 @@ public final class ReportsView {
         date.setCellValueFactory(c -> new ReadOnlyStringWrapper(c.getValue().soldAt().format(DATE_TIME)));
         TableColumn<Sale, String> total = new TableColumn<>("Total");
         total.setCellValueFactory(c -> new ReadOnlyStringWrapper(peso(c.getValue().total())));
+        com.kofi.pos.ui.common.UiSupport.numeric(total);
         table.getColumns().addAll(List.of(receipt, date, total));
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         table.setPrefHeight(440);
-        table.setPlaceholder(new Label("No completed receipts in this date range."));
+        table.setPlaceholder(new Label("No completed receipts in this date range.\nTry a wider range or clear the dates."));
 
         Runnable run = () -> { // Runs the report with the dates currently typed.
             try {
