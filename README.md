@@ -56,6 +56,18 @@ To open the project in an IDE, import it as a Maven project and run `com.kofi.po
 - **Username:** `admin`
 - **Password:** `admin123`
 
+## Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| Ctrl+1 to Ctrl+7 | Switch between Overview, Point of Sale, Products, Stock, Sales & Receipts, Reports and Settings |
+| Ctrl+F or `/` | Move to the search box on the current screen |
+| Ctrl+Enter | Complete the sale on Point of Sale (when the payment is valid) |
+| Enter | Run the screen's main action, for example Complete sale from the cash field |
+| Esc | Clear the search box or the current form; on Point of Sale, Esc pressed outside the search box clears the cart |
+
+Shortcuts also appear in the sidebar and in button tooltips.
+
 ## Your local data
 
 - On first launch, Kofi creates `data/kofi-pos.db` and loads its starter records from `src/main/resources/seed/seed.sql`.

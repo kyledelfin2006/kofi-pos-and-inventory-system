@@ -110,7 +110,11 @@ Use gently rounded corners for fields, buttons, and panels. Read-only fields use
 
 ## Components
 
-Buttons share one shape and clear primary, secondary, quiet, and destructive roles. Inputs use a neutral border, a visible brown focus state, and a red invalid state. Tables use restrained striping and a tinted selection row. Navigation uses light text on the dark rail with a stronger green active row.
+Buttons share one shape and clear primary, secondary, quiet, and destructive roles. Inputs use a neutral border, a visible brown focus state, and a red invalid state. Tables use restrained striping and a tinted selection row; money and quantity columns are right-aligned, and low or out-of-stock rows say "Low" or "Out" in words as well as colour. Navigation uses an outline icon, light text and its shortcut on the dark rail, with a coffee-brown active row.
+
+**Messages.** Confirmations appear as a toast at the bottom right and fade after about three seconds; an error toast stays until clicked. Confirmation dialogs name their action ("Delete product", "Reset data"), turn the action button red when it is destructive, and never make a destructive action the Enter default. Field errors stay beside the field and appear only after the field has been edited or left, so a blank form is not shown in red.
+
+**Keyboard.** Every control shows one brown focus ring. Ctrl+1 to Ctrl+7 switch screens, Ctrl+F or `/` focus the screen's search box, Ctrl+Enter completes a sale, and Esc clears the current form. Screens with a search box open with the cursor in it.
 
 ## Do's and Don'ts
 

@@ -28,7 +28,8 @@ The dependency direction is intentional. `PosService` depends on the small `PosR
 | `src/main/java/com/kofi/pos/Launcher.java` | Plain entry point (used by `run.cmd`, `javafx:run`, IDEs); starts `PosApp`. |
 | `src/main/java/com/kofi/pos/app/PosApp.java` | JavaFX startup, sign-in, navigation, application shell, and screen wiring. |
 | `src/main/java/com/kofi/pos/ui/view/` | One view per module plus the receipt dialog. |
-| `src/main/java/com/kofi/pos/ui/common/` | Shared field/layout helpers (`UiSupport`) and the product table. |
+| `src/main/java/com/kofi/pos/ui/common/` | Shared field/layout helpers (`UiSupport`), the product table, `Toast` (bottom-right messages), `Dialogs` (styled confirmations that name their action) and `NavIcons` (sidebar icons drawn as vector paths). |
+| `src/main/resources/style.css` | The shared look: colour tokens (`-kofi-*`), controls, tables, toasts and dialogs. |
 | `src/main/java/com/kofi/pos/service/PosService.java` | In-memory collections (ArrayList, LinkedList, Stack, Queue), validation, product/sale/stock rules, reports, reset. |
 | `src/main/java/com/kofi/pos/algorithm/` | Hand-written insertion/selection sort, linear/binary search, recursive sum. |
 | `src/main/java/com/kofi/pos/security/PasswordHasher.java` | PBKDF2 password verification. |

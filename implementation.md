@@ -26,7 +26,7 @@ The assignment's employee attendance sentence is a sample project description, n
 - Checkout saves a receipt, sale lines, stock decrements, and corresponding stock movements. Receipt numbers use `R-YYYYMMDD-####`. Voiding requires a reason (150 characters maximum), restores the sold quantities, records the reversal, and preserves the original sale as voided.
 - Stock movement quantity is a positive integer. Stock In adds stock. Stock Out and Adjust decrease stock and cannot exceed on-hand quantity. Out and Adjust require a note (200 characters maximum); reference is optional (50 characters maximum).
 - Report dates use `YYYY-MM-DD`, default to today, reject future dates, and require From ≤ To. Store name is required (80 characters); address (150) and receipt footer (200) are optional.
-- Text formatters reject invalid numeric/date characters as the user types. Invalid fields show a red border and inline error; required fields are marked `*`, and the relevant save/checkout button stays disabled until valid. Inputs trim on focus loss, money displays as `₱#,##0.00` on blur, text areas show character counts, and read-only fields use a grey style. Enter submits the screen's primary action; Escape clears/cancels the current form or dialog.
+- Text formatters reject invalid numeric/date characters as the user types. Invalid fields show a red border and inline error once the field has been edited or left; required fields are marked `*`, and the relevant save/checkout button stays disabled until valid. Inputs trim on focus loss, money displays as `₱#,##0.00` on blur, text areas show character counts, and read-only fields use a grey style. Enter submits the screen's primary action; Escape clears/cancels the current form or dialog.
 
 ## Assignment requirements mapped to the POS
 
@@ -62,6 +62,7 @@ Sorting and searching required for the assignment will use explicit loops/recurs
 - `src/main/java/com/kofi/pos/data/PosRepository.java` — persistence port implemented by `SqlitePosRepository`.
 - `src/main/resources/seed/seed.sql` — initial products, demo user, and store settings.
 - `src/main/resources/style.css` — shared JavaFX look and control states.
+- `src/main/java/com/kofi/pos/ui/common/` — shared UI helpers, including `Toast`, `Dialogs` and `NavIcons`; `style.css` holds the colour tokens.
 - `docs/architecture.md` and `docs/code-walkthrough.md` — dependency map, SOLID choices, and the main code paths explained in order.
 
 Keep screens in Java code unless a view is substantially clearer in FXML. Persistence is a local SQLite database accessed through plain JDBC (`sqlite-jdbc`); avoid adding a database server, ORM, state-management framework, or extra UI library.
@@ -78,6 +79,7 @@ Keep screens in Java code unless a view is substantially clearer in FXML. Persis
 ## Current implementation status
 
 - The project compiles with `mvn compile` (SQLite integration included).
+- UI refresh (colour tokens and contrast, toasts, named confirmation dialogs, keyboard shortcuts, responsive checkout layout) is implemented; screens were rendered and the shortcuts exercised with a scratch harness against a throwaway database.
 - A headless check of `SqlitePosRepository` against a fresh database passed: first-launch seed (20 products, 1 user), save then reload, and reset to defaults.
 - SQL seed data, all seven modules, local persistence, and the assignment data-structure/algorithm mappings are implemented.
 
