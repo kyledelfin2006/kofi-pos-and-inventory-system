@@ -51,6 +51,12 @@
 }
 .nav-button:hover { -fx-background-color: #251d18; -fx-text-fill: #ffffff; }
 .nav-button:focused { -fx-border-color: #d2c6b8; -fx-border-radius: 7px; }
+.nav-button .nav-icon { -fx-fill: transparent; -fx-stroke: #c9bfb4; -fx-stroke-width: 1.8px; -fx-stroke-line-cap: round; -fx-stroke-line-join: round; }
+.nav-button .nav-text { -fx-text-fill: #e5e0da; -fx-font-size: 13px; -fx-font-weight: 600; }
+.nav-button .nav-hint { -fx-text-fill: #8f8377; -fx-font-size: 10px; }
+.nav-button:hover .nav-icon, .nav-button-active .nav-icon { -fx-stroke: #ffffff; }
+.nav-button:hover .nav-text, .nav-button-active .nav-text { -fx-text-fill: #ffffff; }
+.nav-button-active .nav-hint { -fx-text-fill: #d9c7b5; }
 .nav-button-active { -fx-background-color: #6c4022; -fx-text-fill: #ffffff; }
 
 .topbar { -fx-background-color: -kofi-surface; -fx-border-color: transparent transparent #e3e0dc transparent; -fx-border-width: 0 0 1px 0; }

@@ -68,6 +68,7 @@ public final class PointOfSaleView {
         // ============ LEFT SIDE: search, category chips and the product tiles ============
         TextField search = new TextField();
         search.setPromptText("Search by name or SKU");
+        search.setTooltip(new javafx.scene.control.Tooltip("Search (Ctrl+F or /)"));
         search.setTextFormatter(limitFormatter(60));
         trimOnBlur(search);
         Button clear = new Button("×");
@@ -269,6 +270,7 @@ public final class PointOfSaleView {
         checkout.getStyleClass().add("primary-button");
         checkout.setMaxWidth(Double.MAX_VALUE);
         checkout.setDefaultButton(true);
+        checkout.setTooltip(new javafx.scene.control.Tooltip("Complete sale (Ctrl+Enter)"));
         Button cancel = new Button("Clear cart");
         cancel.getStyleClass().add("quiet-button");
         cancel.setOnAction(event -> {
@@ -365,6 +367,11 @@ public final class PointOfSaleView {
         showFieldError(cartDiscountField, cartDiscountError, discountValid ? "" : "Discount cannot exceed subtotal.");
         showFieldError(cartTenderField, cartTenderError, tenderValid || !hasCart ? "" : "Cash tendered must be at least the total.");
         cartCheckoutButton.setDisable(!hasCart || !discountValid || !tenderValid || invalidCartSku != null); // All conditions must hold.
+    }
+
+    /** Ctrl+Enter: completes the sale when every payment rule is met (same as pressing the button). */
+    public void completeSale() {
+        if (cartCheckoutButton != null && !cartCheckoutButton.isDisabled()) cartCheckoutButton.fire();
     }
 
     /** Escape key: clears the search box if focused there, otherwise abandons the whole cart. */
