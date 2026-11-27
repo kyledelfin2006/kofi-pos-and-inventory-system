@@ -9,7 +9,9 @@ colors:
   surface: "#ffffff"
   sidebar: "#1a1411"
   text: "#1c1612"
-  muted-text: "#ab6536"
+  muted-text: "#8a4f26"
+  placeholder: "#7d6a5a"
+  success: "#24704e"
   border: "#e4e0dc"
   error: "#b33535"
   warning: "#936619"
@@ -79,6 +81,8 @@ The interface keeps sale math and stock status easy to scan during everyday shop
 **The Counter Rule.** Let checkout totals and available stock carry the strongest emphasis on the POS screen.
 
 ## Colors
+
+All colours are defined once as `-kofi-*` tokens at the top of `src/main/resources/style.css`; change a colour there, not in individual rules. Secondary text, placeholder text and counters meet 4.5:1 contrast on white and on the canvas.
 
 Coffee brown is reserved for primary actions and active states. The near-black rail anchors navigation. Neutral white and soft warm grey surfaces carry tables and forms; red and amber are reserved for errors and warnings.
 
